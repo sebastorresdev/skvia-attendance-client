@@ -1,0 +1,200 @@
+<div class="flex flex-row items-center justify-between">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a [routerLink]="['/users']">Lista Usuarios</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ currentUser?.displayName ?? 'Nuevo' }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <div class="flex gap-2">
+    <button nz-button [routerLink]="['/users']">Cancelar</button>
+    <button nz-button nzType="primary" [nzLoading]="saving()" (click)="submit()">Guardar</button>
+  </div>
+</div>
+
+<nz-divider class="my-4!" />
+
+@if (loadingData()) {
+<!-- Estado de carga: sedes, roles y (si aplica) datos del usuario -->
+<div class="flex flex-col items-center justify-center py-24">
+  <nz-icon nzType="loading" class="text-3xl" />
+  <p class="text-sm opacity-60 mt-4">Cargando información...</p>
+</div>
+} @else {
+<!-- FORMULARIO DE USUARIO -->
+<form nz-form [formGroup]="form" nzLayout="vertical" class="max-w-5xl">
+
+  <!-- ============================================ -->
+  <!-- CARD 1: Datos personales (avatar + campos)   -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Datos personales" class="mb-4!">
+    <div class="flex flex-col sm:flex-row gap-6">
+
+      <!-- Avatar: cuadrado fijo 128px, no crece ni se deforma -->
+      <div class="shrink-0 relative group w-32 h-32">
+        <nz-upload [nzCustomRequest]="customUpload" nzName="avatar" nzListType="picture-card" [nzShowUploadList]="false"
+          [nzBeforeUpload]="beforeUpload" (nzChange)="handleChange($event)"
+          class="[&_.ant-upload]:w-32! [&_.ant-upload]:h-32! [&_.ant-upload]:overflow-hidden!">
+
+          @if (!avatarUrl()) {
+          <div class="flex flex-col items-center justify-center w-full h-full">
+            <nz-icon class="text-2xl mb-1" [nzType]="loading() ? 'loading' : 'camera'" />
+            <span class="text-xs">Subir foto</span>
+          </div>
+          } @else {
+          <div class="w-full h-full overflow-hidden">
+            <img [src]="avatarUrl()" class="w-full h-full object-cover block" />
+          </div>
+          }
+        </nz-upload>
+
+        <!-- Botón de borrar flotante -->
+        @if (avatarUrl()) {
+        <button type="button" (click)="removeAvatar($event)"
+          class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer z-20"
+          title="Eliminar foto">
+          <nz-icon nzType="delete" class="text-xs" />
+        </button>
+        }
+      </div>
+
+      <!-- Campos: grid 2 columnas, ocupa el resto del ancho -->
+      <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 content-start">
+        <nz-form-item class="mb-0">
+          <nz-form-label>Nombre Visible</nz-form-label>
+          <nz-form-control>
+            <input nz-input formControlName="displayName" placeholder="Nombre completo" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item class="mb-0">
+          <nz-form-label nzRequired>Usuario</nz-form-label>
+          <nz-form-control>
+            <input nz-input formControlName="userName" placeholder="Nombre de usuario" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item class="mb-0">
+          <nz-form-label nzRequired>Email</nz-form-label>
+          <nz-form-control>
+            <input nz-input formControlName="email" placeholder="correo@dominio.com" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item class="mb-0">
+          <nz-form-label>Teléfono</nz-form-label>
+          <nz-form-control>
+            <input nz-input formControlName="phoneNumber" placeholder="Número de teléfono" />
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+    </div>
+  </nz-card>
+
+  <!-- ============================================ -->
+  <!-- CARD 2: Seguridad                             -->
+  <!-- Create mode -> campos de contraseña           -->
+  <!-- Edit mode   -> botón de restablecer            -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Seguridad" class="mb-4!">
+    @if (!isEditMode()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Contraseña</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="password" formControlName="password" placeholder="Mínimo 6 caracteres" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Confirmar contraseña</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="password" formControlName="confirmPassword" placeholder="Repite la contraseña" />
+        </nz-form-control>
+      </nz-form-item>
+
+      @if (form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
+      <p class="text-xs md:col-span-2 -mt-1" style="color: var(--ant-color-error, #f5222d)">
+        Las contraseñas no coinciden
+      </p>
+      }
+    </div>
+    } @else {
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="m-0 text-sm font-medium">Contraseña</p>
+        <p class="m-0 text-xs opacity-60">Envía un enlace o define una nueva contraseña para este usuario</p>
+      </div>
+      <button nz-button type="button" (click)="openResetPassword()">
+        Restablecer contraseña
+      </button>
+    </div>
+    }
+  </nz-card>
+
+  <!-- ============================================ -->
+  <!-- CARD 3: Acceso (sedes + estado + roles)       -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Acceso" class="mb-4!">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+      <nz-form-item class="md:col-span-2 mb-0">
+        <nz-form-label nzRequired>Sedes Asignadas</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="branchIds" nzMode="multiple" nzPlaceHolder="Seleccione las sedes" nzShowSearch
+            class="w-full">
+            @for (branch of branchList; track branch.branchId) {
+            <nz-option [nzValue]="branch.branchId" [nzLabel]="branch.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label>¿Está Activo?</nz-form-label>
+        <nz-form-control>
+          <div class="py-1">
+            <nz-switch formControlName="isActive"></nz-switch>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+
+    <nz-divider class="my-4!" />
+
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Roles del Sistema</nz-form-label>
+      <nz-form-control>
+        <nz-checkbox-group [nzOptions]="roleList" formControlName="roleIds"></nz-checkbox-group>
+      </nz-form-control>
+    </nz-form-item>
+  </nz-card>
+
+  <!-- ============================================ -->
+  <!-- CARD 4: Permisos avanzados (opcional)         -->
+  <!-- Solo visible en modo edición — no aplica al   -->
+  <!-- crear un usuario nuevo.                        -->
+  <!-- ============================================ -->
+  @if (isEditMode()) {
+  <nz-card nzTitle="Permisos avanzados" class="mb-4!">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="m-0 text-sm font-medium">Permisos individuales</p>
+        <p class="m-0 text-xs opacity-60">
+          Opcional. Otorga permisos puntuales a este usuario aunque su rol no los incluya.
+        </p>
+      </div>
+      <button nz-button type="button" (click)="openSetPermissions()">
+        Establecer permisos
+      </button>
+    </div>
+  </nz-card>
+  }
+</form>
+}
+
+
+<app-reset-password-modal
+  [(visible)]="showResetPasswordModal"
+  [userId]="currentUser?.userId!"
+  [userName]="currentUser?.userName!">
+</app-reset-password-modal>

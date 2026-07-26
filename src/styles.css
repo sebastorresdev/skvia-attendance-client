@@ -1,3 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+::ng-deep {
+  .ant-upload.ant-upload-select-picture-card {
+    width: 110px !important;     /* Ajusta el ancho deseado */
+    height: 110px !important;
+  }
+
+}
