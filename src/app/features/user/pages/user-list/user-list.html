@@ -25,7 +25,7 @@
         <nz-icon nzType="plus" />
         Nuevo
       </button>
-      <button nz-button nzType="text" disabled="true">
+      <button nz-button nzType="text" [disabled]="setOfCheckedId.size === 0" (click)="showDeleteSelectedUsersConfirm()">
         <nz-icon nzType="delete" />
         Eliminar
       </button>
@@ -87,7 +87,7 @@
         <nz-dropdown-menu #menu="nzDropdownMenu">
           <ul nz-menu>
             <li nz-menu-item (click)="editUser(data.userId)">Editar</li>
-            <li nz-menu-item (click)="deleteUser(data)">Eliminar</li>
+            <li nz-menu-item (click)="showDeleteUserConfirm(data)">Eliminar</li>
             <li nz-menu-item (click)="setPermissions(data)">Establecer permisos</li>
             <li nz-menu-item (click)="openResetPassword(data)">Restablecer contraseña</li>
           </ul>

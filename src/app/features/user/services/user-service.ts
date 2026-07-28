@@ -6,6 +6,7 @@ import { CreateUserRequest } from '../models/create-user-request';
 import { UpdateUserRequest } from '../models/update-user-request';
 import { environment } from '../../../../environments/environment';
 import { ResetPasswordRequest } from '../models/reset-password-request';
+import { DeleteUsersRequest } from '../models/delete-users-request';
 
 @Injectable({
   providedIn: 'root',
@@ -32,6 +33,12 @@ export class UserService {
 
   delete(userId: string) {
     return this._http.delete(`${this._base}/${userId}`);
+  }
+
+  deleteSelected(deleteUsers: DeleteUsersRequest) {
+    return this._http.delete(`${this._base}/`, {
+      body: deleteUsers
+    });
   }
 
   uploadAvatar(avatar: FormData) {
