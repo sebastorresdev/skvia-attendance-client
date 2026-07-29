@@ -46,7 +46,7 @@
     </div>
     <!-- FILTROS -->
     <div class="flex flex-row gap-1">
-      <nz-select [(ngModel)]="value" nzAllowClear [style.width.px]="200" [nzOptions]="options"
+      <nz-select nzAllowClear [style.width.px]="200"
         nzPlaceHolder="Buscar por rol" nzVariant="underlined" />
       <nz-space-compact>
         <nz-input-wrapper>
@@ -88,7 +88,7 @@
           <ul nz-menu>
             <li nz-menu-item (click)="editUser(data.userId)">Editar</li>
             <li nz-menu-item (click)="showDeleteUserConfirm(data)">Eliminar</li>
-            <li nz-menu-item (click)="setPermissions(data)">Establecer permisos</li>
+            <li nz-menu-item (click)="openPermissions(data)">Establecer permisos</li>
             <li nz-menu-item (click)="openResetPassword(data)">Restablecer contraseña</li>
           </ul>
         </nz-dropdown-menu>
@@ -121,14 +121,6 @@
     }
   </tbody>
 </nz-table>
-<nz-drawer [nzClosable]="false" [nzVisible]="visible" nzPlacement="right" nzTitle="Basic Drawer" (nzOnClose)="close()">
-  <ng-container *nzDrawerContent>
-    <p>Some contents...</p>
-    <p>Some contents...</p>
-    <p>Some contents...</p>
-  </ng-container>
-</nz-drawer>
-
 <app-reset-password-modal
   [(visible)]="showResetPasswordModal"
   [userId]="selectedUser()?.userId ?? ''"

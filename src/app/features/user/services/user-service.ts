@@ -7,6 +7,7 @@ import { UpdateUserRequest } from '../models/update-user-request';
 import { environment } from '../../../../environments/environment';
 import { ResetPasswordRequest } from '../models/reset-password-request';
 import { DeleteUsersRequest } from '../models/delete-users-request';
+import { PermissionGroup } from '../../../shared/models/permission-group';
 
 @Injectable({
   providedIn: 'root',
@@ -57,5 +58,14 @@ export class UserService {
 
   resetPassword(request: ResetPasswordRequest) {
     return this._http.post<void>(`${this._base}/reset-password`, request);
+  }
+
+  getForUser(userId: string) {
+    return this._http.get<PermissionGroup[]>(`${this._base}/${userId}/permissions`);
+  }
+
+  // Reemplaza los permisos individuales (overrides) del usuario
+  setOverrides(userId: string, permissionKeys: string[]) {
+    return this._http.put<void>(`${this._base}/${userId}/permissions/overrides`, { permissionKeys });
   }
 }

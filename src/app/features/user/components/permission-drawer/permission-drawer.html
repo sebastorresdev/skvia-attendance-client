@@ -1,0 +1,66 @@
+<div class="flex flex-col h-full">
+  @if (userName) {
+    <p class="text-sm opacity-70 mb-4">
+      Permisos individuales para <strong>{{ userName }}</strong>
+    </p>
+  }
+
+  <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+    @for (group of groups; track group.group) {
+      <nz-card [nzTitle]="cardTitle" class="mb-0!">
+        <ng-template #cardTitle>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="m-0 font-semibold">{{ group.group }}</p>
+              <p class="m-0 text-xs opacity-60 font-normal">{{ group.groupDescription }}</p>
+            </div>
+            <label
+              nz-checkbox
+              [ngModel]="isGroupAllChecked(group)"
+              [nzIndeterminate]="isGroupIndeterminate(group)"
+              (ngModelChange)="onGroupAllChange(group, $event)">
+              Todos
+            </label>
+          </div>
+        </ng-template>
+
+        <div class="space-y-3">
+          @for (permission of group.permissions; track permission.key) {
+            <div class="flex items-start gap-2">
+              <label
+                nz-checkbox
+                [ngModel]="isChecked(permission.key)"
+                [nzDisabled]="isInherited(permission.key)"
+                (ngModelChange)="toggle(permission.key)">
+              </label>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium" [class.opacity-50]="isInherited(permission.key)">
+                    {{ permission.display }}
+                  </span>
+                  @if (isInherited(permission.key)) {
+                    <nz-tag class="text-xs">Heredado del rol</nz-tag>
+                  }
+                </div>
+                <p class="m-0 text-xs opacity-60">
+                  @if (isInherited(permission.key)) {
+                    Este permiso viene del rol y no puede modificarse aquí.
+                  } @else {
+                    {{ permission.description }}
+                  }
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      </nz-card>
+    }
+  </div>
+
+  <nz-divider class="my-4!"></nz-divider>
+
+  <div class="flex justify-end gap-2">
+    <button nz-button (click)="close()">Cancelar</button>
+    <button nz-button nzType="primary" (click)="save()">Guardar</button>
+  </div>
+</div>

@@ -1,31 +1,283 @@
+// import { Component, inject, OnInit, signal } from '@angular/core';
+// import { FormsModule } from '@angular/forms';
+// import { DatePipe } from '@angular/common';
+// // NG-ZORRO
+// import { NzTableModule } from 'ng-zorro-antd/table';
+// import { NzIconModule } from 'ng-zorro-antd/icon';
+// import { NzButtonModule, NzButtonSize } from 'ng-zorro-antd/button';
+// import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
+// import { NzMenuModule } from 'ng-zorro-antd/menu';
+// import { NzSwitchModule } from 'ng-zorro-antd/switch';
+// import { NzTagModule } from 'ng-zorro-antd/tag';
+// import { NzDrawerModule, NzDrawerService } from 'ng-zorro-antd/drawer';
+// import { NzModalService } from 'ng-zorro-antd/modal';
+// import { NzModalModule } from 'ng-zorro-antd/modal'
+// import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+// import { NzInputModule } from 'ng-zorro-antd/input';
+// import { NzSpaceModule } from 'ng-zorro-antd/space';
+// import { NzSelectModule } from 'ng-zorro-antd/select';
+// import { UserResponse } from '../../models/user-response';
+// import { UserService } from '../../services/user-service';
+// import { Router } from '@angular/router';
+// import { ResetPasswordModal } from '../../components/reset-password-modal/reset-password-modal';
+// import { NzMessageService } from 'ng-zorro-antd/message';
+// import { DeleteUsersRequest } from '../../models/delete-users-request';
+// import { PermissionDrawer } from '../../components/permission-drawer/permission-drawer';
+// import { PermissionService } from '../../../../shared/services/permission';
+// import { PermissionGroup } from '../../../../shared/models/permission-group';
+
+
+// @Component({
+//   selector: 'app-user-list',
+//   imports: [
+//     NzInputModule,
+//     NzSpaceModule,
+//     DatePipe,
+//     FormsModule,
+//     NzTableModule,
+//     NzIconModule,
+//     NzButtonModule,
+//     NzDropdownModule,
+//     NzMenuModule,
+//     NzSwitchModule,
+//     NzTagModule,
+//     NzDrawerModule,
+//     NzModalModule,
+//     NzAvatarModule,
+//     NzSelectModule,
+//     ResetPasswordModal,
+//   ],
+//   templateUrl: './user-list.html'
+// })
+// export class UserList implements OnInit {
+//   private _router = inject(Router);
+//   private _userService = inject(UserService);
+//   private _messageService = inject(NzMessageService);
+//   private _modalService = inject(NzModalService);
+//   private _permissionService = inject(PermissionService);
+//   private readonly drawerService = inject(NzDrawerService);
+
+//   showResetPasswordModal = signal(false);
+//   selectedUser = signal<UserResponse | null>(null);
+
+
+//   users = signal<UserResponse[]>([]);
+//   checked = false;
+//   indeterminate = false;
+//   permissions: PermissionGroup[] = [];
+//   listOfCurrentPageData: readonly UserResponse[] = [];
+//   setOfCheckedId = new Set<string>();
+
+//   readonly options = [
+//     { value: 'jack', label: 'Jack' },
+//     { value: 'lucy', label: 'Lucy' },
+//     { value: 'Yiminghe', label: 'yiminghe' },
+//     { value: 'disabled', label: 'Disabled', disabled: true }
+//   ];
+
+//   private modal = inject(NzModalService);
+
+//   // INICIALIZACION DE DATOS
+//   ngOnInit(): void {
+//     this.loadUsers();
+//   }
+
+//   // NAVEGACION A LA PAGINA DE CREAR
+//   goToNewUser(): void {
+//     this._router.navigate(['/users/new']);
+//   }
+
+//   // NAVEGACION A LA PAGINA DE EDITAR
+//   editUser(userId: string) {
+//     this._router.navigate(['/users', userId]);
+//   }
+
+//   loadUsers() {
+//     this._userService.getAll().subscribe({
+//       next: (data) => {
+//         this.users.set(data);
+//       },
+//       error: (error) => {
+//         console.log('Error al cargar usuarios', error);
+//       },
+//     });
+//   }
+
+//   // Actualizar los checkbox seleccionados
+//   updateCheckedSet(id: string, checked: boolean): void {
+//     if (checked) {
+//       this.setOfCheckedId.add(id);
+//     } else {
+//       this.setOfCheckedId.delete(id);
+//     }
+//   }
+
+//   // METODO CUANDO SE SELECCIONA UN UNICO CHECKBOX
+//   onItemChecked(id: string, checked: boolean): void {
+//     this.updateCheckedSet(id, checked);
+//     this.refreshCheckedStatus();
+//   }
+
+//   // METODO CUANDO SE SELECCIONA TODO EL CHEKBOX
+//   onAllChecked(value: boolean): void {
+//     this.listOfCurrentPageData.forEach((item) => this.updateCheckedSet(item.userId, value));
+//     this.refreshCheckedStatus();
+//   }
+
+//   onCurrentPageDataChange($event: readonly UserResponse[]): void {
+//     this.listOfCurrentPageData = $event;
+//     this.refreshCheckedStatus();
+//   }
+
+//   refreshCheckedStatus(): void {
+//     this.checked = this.listOfCurrentPageData.every((item) => this.setOfCheckedId.has(item.userId));
+//     this.indeterminate =
+//       this.listOfCurrentPageData.some((item) => this.setOfCheckedId.has(item.userId)) && !this.checked;
+//   }
+
+//   // MODAL CONFIRMACION PARA ELIMINACION
+//   showDeleteUserConfirm(user: UserResponse): void {
+//     this._modalService.confirm({
+//       nzTitle: `Estas seguro de que quieres eliminar ${user.userName}`,
+//       nzOkText: 'Confirmar',
+//       nzOkType: 'primary',
+//       nzOkDanger: true,
+//       nzOnOk: () => {
+//         alert("LLAMAR A LA FUNCION PARA ELIMINAR UN UNICO USUARIO");
+//       },
+//       nzCancelText: 'Cancelar',
+//       nzOnCancel: () => console.log('Cancel')
+//     });
+//   }
+
+//   showDeleteSelectedUsersConfirm(): void {
+//     this._modalService.confirm({
+//       nzTitle: `Estas seguro de que quieres eliminar ${this.setOfCheckedId.size}`,
+//       nzOkText: 'Confirmar',
+//       nzOkType: 'primary',
+//       nzOkDanger: true,
+//       nzOnOk: () => {
+//         alert("LLAMAR A LA FUNCION PARA ELIMINAR USUARIOS SELECCIONADOS");
+//       },
+//       nzCancelText: 'Cancelar',
+//       nzOnCancel: () => console.log('Cancel')
+//     });
+//   }
+
+//   // ELIMINACION DE USUARIO SELECCIONADOS
+//   deleteSelectedUsers(): void {
+
+//     TODO: "Falta implementar el currentUser"; "Implementar el modal"
+//     // if (this.setOfCheckedId.has(currentUserId)) {
+//     //   this._messageService.warning('No puedes eliminar tu propio usuario.');
+//     //   return;
+//     // }
+
+//     // const request: DeleteUsersRequest = {
+//     //   currentUserId:currentUserId,
+//     //   userIds: Array.from(this.setOfCheckedId)
+//     // };
+
+//     // this._userService.deleteSelected(request).subscribe({
+//     //   next: () => {
+//     //     // Limpias el Set y recargas la data
+//     //     this.setOfCheckedId.clear();
+//     //     this.loadUsers();
+//     //   },
+//     //   error: (err) => {
+//     //     console.error('Error al eliminar usuarios', err);
+//     //   }
+//     // });
+//   }
+
+//   // ABRIR COMPONENTE DRAWER - ASIGNACION DE PERMISOS
+//   openComponent(user: UserResponse): void {
+
+//     this._permissionService.getAll().subscribe((data) => {
+//       this.permissions = data;
+
+//       const drawerRef = this.drawerService.create<PermissionDrawer, PermissionGroup[], string>({
+//         nzTitle: 'Establecer Permisos',
+//         nzContent: PermissionDrawer,
+//         nzData: this.permissions
+//       });
+
+//       drawerRef.afterOpen.subscribe(() => {
+//         console.log('Drawer(Component) open');
+//       });
+
+//       drawerRef.afterClose.subscribe(data => {
+//         console.log(data);
+//         if (typeof data === 'string') {
+//           console.log(data);
+//         }
+//         console.log('Drawer(Component) close');
+//       });
+//     });
+//   }
+
+
+
+//   setPermissions(user: UserResponse): void {
+//     console.log('Establecer permisos');
+//     this.visible = true;
+//   }
+//   resetPassword(user: UserResponse): void {
+//     console.log('Restablecer contraseña');
+//   }
+//   toggleActive(user: UserResponse, active: boolean) {
+//     console.log(active ? 'Activar usuario' : 'Archivar usuario');
+//   }
+
+//   // DRAWER
+//   visible = false;
+
+//   open(): void {
+//     this.visible = true;
+//   }
+
+//   close(): void {
+//     this.visible = false;
+//   }
+
+//   openResetPassword(user: UserResponse): void {
+//     this.selectedUser.set(user);
+//     this.showResetPasswordModal.set(true);
+//   }
+// }
+
+
+
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 // NG-ZORRO
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzButtonModule, NzButtonSize } from 'ng-zorro-antd/button';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzDrawerModule } from 'ng-zorro-antd/drawer';
-import { NzModalService } from 'ng-zorro-antd/modal';
-import { NzModalModule } from 'ng-zorro-antd/modal'
+import { NzDrawerModule, NzDrawerService } from 'ng-zorro-antd/drawer';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzMessageService } from 'ng-zorro-antd/message';
+
 import { UserResponse } from '../../models/user-response';
 import { UserService } from '../../services/user-service';
 import { Router } from '@angular/router';
 import { ResetPasswordModal } from '../../components/reset-password-modal/reset-password-modal';
-import { NzMessageService } from 'ng-zorro-antd/message';
 import { DeleteUsersRequest } from '../../models/delete-users-request';
-
+import { PermissionDrawer, PermissionDrawerData } from '../../components/permission-drawer/permission-drawer';
+import { PermissionService } from '../../../../shared/services/permission';
 
 @Component({
   selector: 'app-user-list',
+  standalone: true,
   imports: [
     NzInputModule,
     NzSpaceModule,
@@ -44,62 +296,53 @@ import { DeleteUsersRequest } from '../../models/delete-users-request';
     NzSelectModule,
     ResetPasswordModal,
   ],
-  templateUrl: './user-list.html'
+  templateUrl: './user-list.html',
 })
 export class UserList implements OnInit {
   private _router = inject(Router);
   private _userService = inject(UserService);
   private _messageService = inject(NzMessageService);
   private _modalService = inject(NzModalService);
+  private _drawerService = inject(NzDrawerService);
+
+  users = signal<UserResponse[]>([]);
 
   showResetPasswordModal = signal(false);
   selectedUser = signal<UserResponse | null>(null);
 
-
-  users = signal<UserResponse[]>([]);
   checked = false;
   indeterminate = false;
   listOfCurrentPageData: readonly UserResponse[] = [];
   setOfCheckedId = new Set<string>();
 
-  readonly options = [
-    { value: 'jack', label: 'Jack' },
-    { value: 'lucy', label: 'Lucy' },
-    { value: 'Yiminghe', label: 'yiminghe' },
-    { value: 'disabled', label: 'Disabled', disabled: true }
-  ];
-
-  readonly value = signal('');
-
-  private modal = inject(NzModalService);
-
-  // INICIALIZACION DE DATOS
   ngOnInit(): void {
     this.loadUsers();
   }
 
-  // NAVEGACION A LA PAGINA DE CREAR
+  // ---------- Navegación ----------
+
   goToNewUser(): void {
     this._router.navigate(['/users/new']);
   }
 
-  // NAVEGACION A LA PAGINA DE EDITAR
-  editUser(userId: string) {
+  editUser(userId: string): void {
     this._router.navigate(['/users', userId]);
   }
 
-  loadUsers() {
+  // ---------- Carga de datos ----------
+
+  loadUsers(): void {
     this._userService.getAll().subscribe({
-      next: (data) => {
-        this.users.set(data);
-      },
+      next: (data) => this.users.set(data),
       error: (error) => {
-        console.log('Error al cargar usuarios', error);
+        console.error('Error al cargar usuarios', error);
+        this._messageService.error('No se pudieron cargar los usuarios');
       },
     });
   }
 
-  // Actualizar los checkbox seleccionados
+  // ---------- Selección de checkboxes (tabla) ----------
+
   updateCheckedSet(id: string, checked: boolean): void {
     if (checked) {
       this.setOfCheckedId.add(id);
@@ -108,20 +351,18 @@ export class UserList implements OnInit {
     }
   }
 
-  // METODO CUANDO SE SELECCIONA UN UNICO CHECKBOX
   onItemChecked(id: string, checked: boolean): void {
     this.updateCheckedSet(id, checked);
     this.refreshCheckedStatus();
   }
 
-  // METODO CUANDO SE SELECCIONA TODO EL CHEKBOX
   onAllChecked(value: boolean): void {
     this.listOfCurrentPageData.forEach((item) => this.updateCheckedSet(item.userId, value));
     this.refreshCheckedStatus();
   }
 
-  onCurrentPageDataChange($event: readonly UserResponse[]): void {
-    this.listOfCurrentPageData = $event;
+  onCurrentPageDataChange(data: readonly UserResponse[]): void {
+    this.listOfCurrentPageData = data;
     this.refreshCheckedStatus();
   }
 
@@ -131,100 +372,93 @@ export class UserList implements OnInit {
       this.listOfCurrentPageData.some((item) => this.setOfCheckedId.has(item.userId)) && !this.checked;
   }
 
-  // MODAL CONFIRMACION PARA ELIMINACION
+  // ---------- Eliminación ----------
+
   showDeleteUserConfirm(user: UserResponse): void {
     this._modalService.confirm({
-      nzTitle: `Estas seguro de que quieres eliminar ${user.userName}`,
+      nzTitle: `¿Estás seguro de que quieres eliminar a ${user.userName}?`,
       nzOkText: 'Confirmar',
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
-        alert("LLAMAR A LA FUNCION PARA ELIMINAR UN UNICO USUARIO");
+        // TODO: llamar a this._userService.delete(user.userId) y recargar la lista
+        alert('LLAMAR A LA FUNCION PARA ELIMINAR UN UNICO USUARIO');
       },
       nzCancelText: 'Cancelar',
-      nzOnCancel: () => console.log('Cancel')
     });
   }
 
-  showDeleteSelectedUsersConfirm() : void {
-        this._modalService.confirm({
-      nzTitle: `Estas seguro de que quieres eliminar ${this.setOfCheckedId.size}`,
+  showDeleteSelectedUsersConfirm(): void {
+    this._modalService.confirm({
+      nzTitle: `¿Estás seguro de que quieres eliminar ${this.setOfCheckedId.size} usuario(s)?`,
       nzOkText: 'Confirmar',
       nzOkType: 'primary',
       nzOkDanger: true,
-      nzOnOk: () => {
-        alert("LLAMAR A LA FUNCION PARA ELIMINAR USUARIOS SELECCIONADOS");
-      },
+      nzOnOk: () => this.deleteSelectedUsers(),
       nzCancelText: 'Cancelar',
-      nzOnCancel: () => console.log('Cancel')
     });
   }
 
-  // ELIMINACION DE USUARIO SELECCIONADOS
   deleteSelectedUsers(): void {
-
-    TODO: "Falta implementar el currentUser"; "Implementar el modal"
+    // TODO: falta implementar el currentUserId (viene de tu servicio de sesión/auth)
     // if (this.setOfCheckedId.has(currentUserId)) {
     //   this._messageService.warning('No puedes eliminar tu propio usuario.');
     //   return;
     // }
 
     // const request: DeleteUsersRequest = {
-    //   currentUserId:currentUserId,
-    //   userIds: Array.from(this.setOfCheckedId)
+    //   currentUserId: currentUserId,
+    //   userIds: Array.from(this.setOfCheckedId),
     // };
 
     // this._userService.deleteSelected(request).subscribe({
     //   next: () => {
-    //     // Limpias el Set y recargas la data
     //     this.setOfCheckedId.clear();
     //     this.loadUsers();
     //   },
     //   error: (err) => {
     //     console.error('Error al eliminar usuarios', err);
-    //   }
+    //     this._messageService.error('No se pudieron eliminar los usuarios seleccionados');
+    //   },
     // });
   }
 
-  deleteUser(user: UserResponse): void {
-    TODO: "No debe eliminar al usuario autenticado"; "Implementar el modal"
+  // ---------- Permisos individuales ----------
 
-    console.log('Se llamo al endpoint eliminar usuario');
-    this._userService.delete(user.userId).subscribe({
-      next: () => {
-        this._messageService.success("Usuario Eliminado.");
+  openPermissions(user: UserResponse): void {
+    this._userService.getForUser(user.userId).subscribe({
+      next: (groups) => {
+        const drawerRef = this._drawerService.create<PermissionDrawer, PermissionDrawerData, string[]>({
+          nzTitle: 'Establecer Permisos',
+          nzWidth: 480,
+          nzContent: PermissionDrawer,
+          nzData: { groups, userName: user.userName },
+        });
+
+        drawerRef.afterClose.subscribe((selectedOverrideKeys) => {
+          if (!selectedOverrideKeys) return; // se cerró con "Cancelar" o la X
+
+          this._userService.setOverrides(user.userId, selectedOverrideKeys).subscribe({
+            next: () => this._messageService.success('Permisos actualizados'),
+            error: () => this._messageService.error('No se pudieron guardar los permisos'),
+          });
+        });
       },
-      error: (error) => {
-        console.log('Error al eliminar usuario.', error);
-      },
-    })
+      error: () => this._messageService.error('No se pudieron cargar los permisos del usuario'),
+    });
   }
 
-
-  setPermissions(user: UserResponse): void {
-    console.log('Establecer permisos');
-    this.visible = true;
-  }
-  resetPassword(user: UserResponse): void {
-    console.log('Restablecer contraseña');
-  }
-  toggleActive(user: UserResponse, active: boolean) {
-    console.log(active ? 'Activar usuario' : 'Archivar usuario');
-  }
-
-  // DRAWER
-  visible = false;
-
-  open(): void {
-    this.visible = true;
-  }
-
-  close(): void {
-    this.visible = false;
-  }
+  // ---------- Contraseña ----------
 
   openResetPassword(user: UserResponse): void {
     this.selectedUser.set(user);
     this.showResetPasswordModal.set(true);
+  }
+
+  // ---------- Activar / Archivar ----------
+
+  toggleActive(user: UserResponse, active: boolean): void {
+    // TODO: llamar a this._userService.archive(user.userId) / unarchive(user.userId)
+    console.log(active ? 'Activar usuario' : 'Archivar usuario', user.userId);
   }
 }
