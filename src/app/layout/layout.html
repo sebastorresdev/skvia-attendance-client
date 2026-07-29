@@ -16,18 +16,26 @@
         <h1>SKVIA - ASISTENCIA</h1>
       </div>
     </div>
-    <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+
+    <!-- VERSION DE NZ-ZORRO -->
+    <!-- <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
       <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
         <ul>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="/welcome">Welcome</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="/login">Login</a>
-          </li>
-          <li nz-menu-item nzMatchRouter>
-            <a routerLink="/users">Usuarios</a>
-          </li>
+          @if(auth.permissions().includes('Permissions.Dashboard.View')) {
+            <li nz-menu-item nzMatchRouter>
+              <a routerLink="/welcome">Welcome</a>
+            </li>
+          }
+          @if(auth.permissions().includes(PERMISSIONS.Roles.View)){
+            <li nz-menu-item nzMatchRouter>
+              <a routerLink="/roles">Roles</a>
+            </li>
+          }
+          @if(auth.permissions().includes('Permissions.Users.View')){
+            <li nz-menu-item nzMatchRouter>
+              <a routerLink="/users">Usuarios</a>
+            </li>
+          }
         </ul>
       </li>
       <li nz-submenu nzOpen nzTitle="Form" nzIcon="form">
@@ -37,7 +45,24 @@
           </li>
         </ul>
       </li>
+    </ul> -->
+
+    <!-- NUEVA VERSION DINAMICA -->
+    <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+      @for (group of menu; track $index) {
+      <li nz-submenu nzOpen [nzTitle]="group.title" [nzIcon]="group.icon">
+        <ul>
+          @for (item of group.children; track $index) {
+          <li nz-menu-item nzMatchRouter *appHasPermission="item.permission">
+            <a [routerLink]="item.link">{{ item.label }}</a>
+          </li>
+          }
+        </ul>
+      </li>
+      }
     </ul>
+    <!-- FIN DE LA VERSION -->
+
   </nz-sider>
   <nz-layout>
     <nz-header>
