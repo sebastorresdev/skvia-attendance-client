@@ -1,7 +1,4 @@
 
-// ============================================
-// 3. permission-drawer.component.ts (REESCRITO)
-// ============================================
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -12,7 +9,8 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzTagModule } from 'ng-zorro-antd/tag';
-
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { PermissionGroup } from '../../../../shared/models/permission-group';
 
 export interface PermissionDrawerData {
@@ -32,6 +30,8 @@ export interface PermissionDrawerData {
     NzCheckboxModule,
     NzDividerModule,
     NzTagModule,
+    NzInputModule,
+    NzIconModule,
   ],
   templateUrl: './permission-drawer.html',
 })
@@ -41,6 +41,23 @@ export class PermissionDrawer {
 
   groups: PermissionGroup[] = structuredClone(this.data?.groups ?? []);
   userName = this.data?.userName ?? null;
+
+  search = signal('');
+
+  filteredGroups = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    if (!term) return this.groups;
+
+    return this.groups
+      .map(g => ({
+        ...g,
+        permissions: g.permissions.filter(p =>
+          p.display.toLowerCase().includes(term) ||
+          p.description.toLowerCase().includes(term)
+        ),
+      }))
+      .filter(g => g.permissions.length > 0);
+  });
 
   // Set de overrides actuales (source === 'Override'), es lo único togglable
   overrides = signal<Set<string>>(
@@ -77,10 +94,15 @@ export class PermissionDrawer {
 
   // ---------- Selección por grupo ----------
 
-  private togglableKeysInGroup(group: PermissionGroup): string[] {
+  togglableKeysInGroup(group: PermissionGroup): string[] {
     return group.permissions
       .filter(p => p.source !== 'Role')
       .map(p => p.key);
+  }
+
+  // El grupo es "no togglable" si TODOS sus permisos vienen del rol
+  isGroupFullyInherited(group: PermissionGroup): boolean {
+    return this.togglableKeysInGroup(group).length === 0;
   }
 
   isGroupAllChecked(group: PermissionGroup): boolean {
