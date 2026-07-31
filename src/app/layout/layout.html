@@ -17,36 +17,6 @@
       </div>
     </div>
 
-    <!-- VERSION DE NZ-ZORRO -->
-    <!-- <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
-      <li nz-submenu nzOpen nzTitle="Dashboard" nzIcon="dashboard">
-        <ul>
-          @if(auth.permissions().includes('Permissions.Dashboard.View')) {
-            <li nz-menu-item nzMatchRouter>
-              <a routerLink="/welcome">Welcome</a>
-            </li>
-          }
-          @if(auth.permissions().includes(PERMISSIONS.Roles.View)){
-            <li nz-menu-item nzMatchRouter>
-              <a routerLink="/roles">Roles</a>
-            </li>
-          }
-          @if(auth.permissions().includes('Permissions.Users.View')){
-            <li nz-menu-item nzMatchRouter>
-              <a routerLink="/users">Usuarios</a>
-            </li>
-          }
-        </ul>
-      </li>
-      <li nz-submenu nzOpen nzTitle="Form" nzIcon="form">
-        <ul>
-          <li nz-menu-item nzMatchRouter>
-            <a>Basic Form</a>
-          </li>
-        </ul>
-      </li>
-    </ul> -->
-
     <!-- NUEVA VERSION DINAMICA -->
     <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
       @for (group of menu; track $index) {

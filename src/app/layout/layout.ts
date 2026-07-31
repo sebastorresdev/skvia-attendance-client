@@ -8,10 +8,19 @@ import { AuthService } from '../core/services/auth.service';
 import { PERMISSIONS } from '../core/constants/permissions';
 import { HasPermissionDirective } from '../core/directives/has-permission.directive';
 import { MENU } from '../core/config/menu.config';
+import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterLink, RouterOutlet, NzIconModule, NzLayoutModule, NzMenuModule,HasPermissionDirective,],
+  imports: [
+    RouterLink,
+    RouterOutlet,
+    NzIconModule,
+    NzLayoutModule,
+    NzMenuModule,
+    NzBreadCrumbModule,
+    HasPermissionDirective,
+  ],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })
