@@ -58,21 +58,21 @@
         <nz-form-item class="mb-0">
           <nz-form-label>Nombre Visible</nz-form-label>
           <nz-form-control>
-            <input nz-input nzSize="large" formControlName="displayName" placeholder="Nombre completo" />
+            <input nz-input formControlName="displayName" placeholder="Nombre completo" />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired>Usuario</nz-form-label>
           <nz-form-control nzErrorTip="El nombre de usuario es requerido">
-            <input nz-input nzSize="large" formControlName="userName" placeholder="Nombre de usuario" />
+            <input nz-input formControlName="userName" placeholder="Nombre de usuario" />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired>Email</nz-form-label>
           <nz-form-control [nzErrorTip]="emailErrorTpl">
-            <input nz-input nzSize="large" formControlName="email" placeholder="correo@dominio.com" />
+            <input nz-input formControlName="email" placeholder="correo@dominio.com" />
           </nz-form-control>
           <ng-template #emailErrorTpl let-control>
             @if (control.hasError('required')) {
@@ -86,7 +86,7 @@
         <nz-form-item class="mb-0">
           <nz-form-label>Teléfono</nz-form-label>
           <nz-form-control>
-            <input nz-input nzSize="large" formControlName="phoneNumber" placeholder="Número de teléfono" />
+            <input nz-input formControlName="phoneNumber" placeholder="Número de teléfono" />
           </nz-form-control>
         </nz-form-item>
       </div>
@@ -102,8 +102,8 @@
       <nz-form-item class="mb-0">
         <nz-form-label nzRequired>Contraseña</nz-form-label>
         <nz-form-control [nzErrorTip]="passwordErrorTpl">
-          <nz-input-password >
-            <input nzSize="large" nz-input formControlName="password" placeholder="Mínimo 6 caracteres" />
+          <nz-input-password>
+            <input nz-input formControlName="password" placeholder="Mínimo 6 caracteres" />
           </nz-input-password>
         </nz-form-control>
         <ng-template #passwordErrorTpl let-control>
@@ -119,7 +119,7 @@
         <nz-form-label nzRequired>Confirmar contraseña</nz-form-label>
         <nz-form-control [nzErrorTip]="confirmPasswordErrorTpl">
           <nz-input-password>
-            <input nzSize="large" nz-input formControlName="confirmPassword" placeholder="Repite la contraseña" />
+            <input nz-input formControlName="confirmPassword" placeholder="Repite la contraseña" />
           </nz-input-password>
         </nz-form-control>
         <ng-template #confirmPasswordErrorTpl let-control>
@@ -152,7 +152,7 @@
       <nz-form-item class="md:col-span-2 mb-0">
         <nz-form-label nzRequired>Sedes Asignadas</nz-form-label>
         <nz-form-control nzErrorTip="Selecciona al menos una sede">
-          <nz-select formControlName="branchIds" nzMode="multiple" nzSize="large" nzPlaceHolder="Seleccione las sedes" nzShowSearch
+          <nz-select formControlName="branchIds" nzMode="multiple" nzPlaceHolder="Seleccione las sedes" nzShowSearch
             class="w-full">
             @for (branch of branchList; track branch.branchId) {
             <nz-option [nzValue]="branch.branchId" [nzLabel]="branch.name"></nz-option>

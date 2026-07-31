@@ -29,7 +29,19 @@
                 "output": "/assets/"
               }
             ],
-            "styles": ["src/theme.less", "src/styles.css"]
+            "styles": [
+              "src/styles.css",
+              {
+                "input": "node_modules/ng-zorro-antd/ng-zorro-antd.dark.css",
+                "bundleName": "theme-dark",
+                "inject": false
+              },
+              {
+                "input": "node_modules/ng-zorro-antd/ng-zorro-antd.css",
+                "bundleName": "theme-default",
+                "inject": false
+              }
+            ]
           },
           "configurations": {
             "production": {

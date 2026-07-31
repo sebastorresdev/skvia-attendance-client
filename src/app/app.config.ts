@@ -10,6 +10,7 @@ import es from '@angular/common/locales/es';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { ThemeService } from './core/services/theme.service';
 
 registerLocaleData(es);
 
@@ -24,9 +25,11 @@ export const appConfig: ApplicationConfig = {
         authInterceptor,
       ])
     ),
-    provideAppInitializer(() => {
+    provideAppInitializer(async () => {
       const authService = inject(AuthService);
-      return authService.init();
+      const themeService = inject(ThemeService);
+      await themeService.initTheme();
+      await authService.init();
     }),
   ],
 };

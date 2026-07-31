@@ -106,11 +106,11 @@ export class UserForm implements OnInit {
 
     if (!this.isEditMode()) {
       this.form.controls['password'].addValidators([Validators.required, Validators.minLength(6)]);
-      this.form.controls['confirmPassword'].addValidators([Validators.required]);
+      this.form.controls['confirmPassword'].addValidators([Validators.required, passwordMatchValidator]);
 
       this.form.controls['password'].valueChanges.subscribe(() =>
-      this.form.controls['confirmPassword'].updateValueAndValidity({ onlySelf: true })
-    );
+        this.form.controls['confirmPassword'].updateValueAndValidity({ onlySelf: true })
+      );
     }
 
     this.loadInitialData();
