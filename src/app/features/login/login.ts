@@ -69,21 +69,3 @@ export class Login {
     }
   }
 }
-
-
-
-
-
-// ============================================
-// AGREGAR al componente TypeScript
-// ============================================
-/*
-
-*/
-
-
-// ============================================
-// login.component.css → puedes vaciarlo por completo,
-// ya no queda ninguna clase custom (.login-form,
-// .login-form-margin, .login-form-button, .login-form-forgot)
-// ============================================

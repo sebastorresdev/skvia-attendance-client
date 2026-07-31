@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, inject } from '@angular/core';
+import { Directive, Input, TemplateRef, ViewContainerRef, inject, effect, signal } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 
 @Directive({
@@ -10,20 +10,21 @@ export class HasPermissionDirective {
   private viewContainer = inject(ViewContainerRef);
   private templateRef = inject(TemplateRef<any>);
 
-  @Input('appHasPermission') set requiredPermission(permission: string | undefined) {
-    this.viewContainer.clear();
+  private requiredPermission = signal<string | undefined>(undefined);
 
-    // 🔥 Si no requiere permiso → mostrar siempre
-    if (!permission) {
-      this.viewContainer.createEmbeddedView(this.templateRef);
-      return;
-    }
-
-    const hasPermission = this.auth.permissions().includes(permission);
-
-    if (hasPermission) {
-      this.viewContainer.createEmbeddedView(this.templateRef);
-    }
+  @Input('appHasPermission') set permission(permission: string | undefined) {
+    this.requiredPermission.set(permission);
   }
 
+  constructor() {
+    effect(() => {
+      const perm = this.requiredPermission();
+      const userPermissions = this.auth.permissions();
+      this.viewContainer.clear();
+
+      if (!perm || userPermissions.includes(perm)) {
+        this.viewContainer.createEmbeddedView(this.templateRef);
+      }
+    });
+  }
 }

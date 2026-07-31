@@ -1,16 +1,3 @@
-// ============================================
-// user-form.component.ts
-// ⚠️ ASUNCIONES a confirmar/ajustar:
-// 1. UserService tiene create(), update(), uploadPhoto() con la misma
-//    convención que ya usamos en el módulo ERP (ajusta nombres si difieren).
-// 2. RoleService.getAll() retorna RoleResponse[] = { id, name }
-// 3. BranchResponse en este módulo usa "branchId" (no "id"), tal como ya
-//    lo referenciaba tu template original.
-// 4. "Establecer permisos" abre un NzDrawerService con un componente propio
-//    (UserPermissionsDrawerComponent) que aún no existe — dejo el punto de
-//    entrada listo, avísame si quieres que lo construyamos.
-// ============================================
-
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -39,12 +26,14 @@ import { BranchResponse } from '../../../branch/models/branch-response';
 import { UserDetailResponse } from '../../models/user-detail-response';
 import { ResetPasswordModal } from '../../components/reset-password-modal/reset-password-modal';
 
-// Validador: contraseña y confirmación deben coincidir
-function passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password')?.value;
-  const confirmPassword = control.get('confirmPassword')?.value;
-  if (!password && !confirmPassword) return null;
-  return password === confirmPassword ? null : { passwordMismatch: true };
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  const parent = control.parent;
+  if (!parent) return null;
+
+  const password = parent.get('password')?.value;
+  if (!password && !control.value) return null;
+
+  return control.value === password ? null : { passwordMismatch: true };
 }
 
 @Component({
@@ -109,7 +98,7 @@ export class UserForm implements OnInit {
     roleIds: [[]],
     password: [''],
     confirmPassword: [''],
-  }, { validators: passwordsMatchValidator });
+  });
 
   ngOnInit(): void {
     const userId = this._route.snapshot.paramMap.get('userId');
@@ -118,6 +107,10 @@ export class UserForm implements OnInit {
     if (!this.isEditMode()) {
       this.form.controls['password'].addValidators([Validators.required, Validators.minLength(6)]);
       this.form.controls['confirmPassword'].addValidators([Validators.required]);
+
+      this.form.controls['password'].valueChanges.subscribe(() =>
+      this.form.controls['confirmPassword'].updateValueAndValidity({ onlySelf: true })
+    );
     }
 
     this.loadInitialData();
@@ -299,7 +292,12 @@ export class UserForm implements OnInit {
 
   submit(): void {
     if (this.form.invalid) {
-      Object.values(this.form.controls).forEach(c => c.markAsTouched());
+      Object.values(this.form.controls).forEach(c => {
+        if (c.invalid) {
+          c.markAsDirty();
+          c.updateValueAndValidity({ onlySelf: true });
+        }
+      });
       this._messageService.error('Revisa los campos marcados');
       return;
     }

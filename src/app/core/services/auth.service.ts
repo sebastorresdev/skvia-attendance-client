@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap, switchMap } from 'rxjs';
+import { tap, switchMap, firstValueFrom, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginRequest } from '../models/LoginRequest';
 import { LoginResponse } from '../models/LoginResponse';
@@ -20,21 +20,23 @@ export class AuthService {
 
   isAuthenticated = computed(() => !!this.token());
 
-  init() {
+  init(): Promise<CurrentUserDto | null> {
     const token = localStorage.getItem('accessToken');
-    if (!token) return;
+    if (!token) return Promise.resolve(null);
 
-    this.http.get<CurrentUserDto>(`${environment.API_URL}/auth/me`)
-      .subscribe({
-        next: (me) => {
+    return firstValueFrom(
+      this.http.get<CurrentUserDto>(`${environment.API_URL}/auth/me`).pipe(
+        tap((me) => {
           this.userId.set(me.userId);
           this.roles.set(me.roles);
           this.permissions.set(me.permissions);
-        },
-        error: () => {
+        }),
+        catchError(() => {
           this.logout();
-        }
-      });
+          return of(null);
+        })
+      )
+    );
   }
 
   login(loginRequest: LoginRequest) {
