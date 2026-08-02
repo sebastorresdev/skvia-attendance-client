@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
 import { ResetPasswordModal } from '../../components/reset-password-modal/reset-password-modal';
 import { DeleteUsersRequest } from '../../models/delete-users-request';
 import { PermissionDrawer, PermissionDrawerData } from '../../components/permission-drawer/permission-drawer';
-import { PermissionService } from '../../../../shared/services/permission';
+import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
 
 @Component({
   selector: 'app-user-list',
@@ -107,7 +107,7 @@ export class UserList implements OnInit {
   }
 
   onAllChecked(value: boolean): void {
-    this.listOfCurrentPageData.forEach((item) => this.updateCheckedSet(item.userId, value));
+    this.listOfCurrentPageData.forEach((item) => this.updateCheckedSet(item.id, value));
     this.refreshCheckedStatus();
   }
 
@@ -117,9 +117,9 @@ export class UserList implements OnInit {
   }
 
   refreshCheckedStatus(): void {
-    this.checked = this.listOfCurrentPageData.every((item) => this.setOfCheckedId.has(item.userId));
+    this.checked = this.listOfCurrentPageData.every((item) => this.setOfCheckedId.has(item.id));
     this.indeterminate =
-      this.listOfCurrentPageData.some((item) => this.setOfCheckedId.has(item.userId)) && !this.checked;
+      this.listOfCurrentPageData.some((item) => this.setOfCheckedId.has(item.id)) && !this.checked;
   }
 
   // ---------- Eliminación ----------
@@ -131,8 +131,20 @@ export class UserList implements OnInit {
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
-        // TODO: llamar a this._userService.delete(user.userId) y recargar la lista
-        alert('LLAMAR A LA FUNCION PARA ELIMINAR UN UNICO USUARIO');
+        // TODO: llamar a this._userService.delete(user.id) y recargar la lista
+        this._userService.delete(user.id).subscribe({
+          next: () => {
+            this._messageService.success(`Usuario ${user.userName} eliminado`);
+            this.loadUsers();
+          },
+          error: (err) => {
+            console.error('Error al eliminar usuario', err);
+
+            // Extraemos el mensaje amigable de la respuesta del backend
+            const errorMessage = parseApiErrorMessage(err);
+            this._messageService.error(errorMessage);
+          },
+        });
       },
       nzCancelText: 'Cancelar',
     });
@@ -150,33 +162,26 @@ export class UserList implements OnInit {
   }
 
   deleteSelectedUsers(): void {
-    // TODO: falta implementar el currentUserId (viene de tu servicio de sesión/auth)
-    // if (this.setOfCheckedId.has(currentUserId)) {
-    //   this._messageService.warning('No puedes eliminar tu propio usuario.');
-    //   return;
-    // }
+    const request: DeleteUsersRequest = {
+      userIds: Array.from(this.setOfCheckedId),
+    };
 
-    // const request: DeleteUsersRequest = {
-    //   currentUserId: currentUserId,
-    //   userIds: Array.from(this.setOfCheckedId),
-    // };
-
-    // this._userService.deleteSelected(request).subscribe({
-    //   next: () => {
-    //     this.setOfCheckedId.clear();
-    //     this.loadUsers();
-    //   },
-    //   error: (err) => {
-    //     console.error('Error al eliminar usuarios', err);
-    //     this._messageService.error('No se pudieron eliminar los usuarios seleccionados');
-    //   },
-    // });
+    this._userService.deleteSelected(request).subscribe({
+      next: () => {
+        this.setOfCheckedId.clear();
+        this.loadUsers();
+      },
+      error: (err) => {
+        const errorMessage = parseApiErrorMessage(err);
+        this._messageService.error(errorMessage);
+      },
+    });
   }
 
   // ---------- Permisos individuales ----------
 
   openPermissions(user: UserResponse): void {
-    this._userService.getForUser(user.userId).subscribe({
+    this._userService.getForUser(user.id).subscribe({
       next: (groups) => {
         const drawerRef = this._drawerService.create<PermissionDrawer, PermissionDrawerData, string[]>({
           nzTitle: 'Establecer Permisos',
@@ -188,8 +193,8 @@ export class UserList implements OnInit {
         drawerRef.afterClose.subscribe((selectedOverrideKeys) => {
           if (!selectedOverrideKeys) return; // se cerró con "Cancelar" o la X
 
-          console.log("Usuario seleccionado",user);
-          this._userService.setOverrides(user.userId, selectedOverrideKeys).subscribe({
+          console.log("Usuario seleccionado", user);
+          this._userService.setOverrides(user.id, selectedOverrideKeys).subscribe({
             next: () => this._messageService.success('Permisos actualizados'),
             error: () => this._messageService.error('No se pudieron guardar los permisos'),
           });
@@ -209,7 +214,7 @@ export class UserList implements OnInit {
   // ---------- Activar / Archivar ----------
 
   toggleActive(user: UserResponse, active: boolean): void {
-    // TODO: llamar a this._userService.archive(user.userId) / unarchive(user.userId)
-    console.log(active ? 'Activar usuario' : 'Archivar usuario', user.userId);
+    // TODO: llamar a this._userService.archive(user.id) / unarchive(user.id)
+    console.log(active ? 'Activar usuario' : 'Archivar usuario', user.id);
   }
 }

@@ -25,6 +25,8 @@ import { RoleResponse } from '../../../role/models/role-response';
 import { BranchResponse } from '../../../branch/models/branch-response';
 import { UserDetailResponse } from '../../models/user-detail-response';
 import { ResetPasswordModal } from '../../components/reset-password-modal/reset-password-modal';
+import { PermissionDrawer, PermissionDrawerData } from '../../components/permission-drawer/permission-drawer';
+import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const parent = control.parent;
@@ -145,7 +147,7 @@ export class UserForm implements OnInit {
   private mapRolesToOptions(roles: RoleResponse[]): NzCheckboxOption[] {
     // ⚠️ El backend necesita nombres de rol (no roleId) porque el Create/Update
     // los pasa directo a Identity — por eso value = r.name, no r.roleId.
-    return roles.map(r => ({ label: r.name, value: r.roleId }));
+    return roles.map(r => ({ label: r.name, value: r.id }));
   }
 
   loadUser(userId: string): void {
@@ -280,12 +282,28 @@ export class UserForm implements OnInit {
   }
 
   openSetPermissions(): void {
-    // TODO: reemplazar por this._drawerService.create({ ... }) una vez que
-    // exista el componente de permisos por usuario. Se deja sin llamar al
-    // servicio todavía porque `nzContent` no acepta `undefined` (rompe el
-    // build). Reutiliza el mismo patrón de Drawer que ya usas para
-    // permisos de Rol.
-    console.log('TODO: abrir drawer de permisos para', this._userId());
+    const userId = this._userId()!;
+    const userName = this.currentUser?.userName ?? '';
+    this._userService.getForUser(userId).subscribe({
+      next: (groups) => {
+        const drawerRef = this._drawerService.create<PermissionDrawer, PermissionDrawerData, string[]>({
+          nzTitle: 'Establecer Permisos',
+          nzWidth: 480,
+          nzContent: PermissionDrawer,
+          nzData: { groups, userName },
+        });
+
+        drawerRef.afterClose.subscribe((selectedOverrideKeys) => {
+          if (!selectedOverrideKeys) return; // se cerró con "Cancelar" o la X
+
+          this._userService.setOverrides(userId, selectedOverrideKeys).subscribe({
+            next: () => this._messageService.success('Permisos actualizados'),
+            error: () => this._messageService.error('No se pudieron guardar los permisos'),
+          });
+        });
+      },
+      error: () => this._messageService.error('No se pudieron cargar los permisos del usuario'),
+    });
   }
 
   // ---------- Guardar ----------
@@ -310,7 +328,8 @@ export class UserForm implements OnInit {
           ? this.updateUser$(photoUrl)
           : this.createUser$(photoUrl)),
         catchError((err) => {
-          this._messageService.error('Ocurrió un error al guardar');
+          const message = parseApiErrorMessage(err);
+          this._messageService.error(message);
           console.error(err);
           return of(null);
         }),

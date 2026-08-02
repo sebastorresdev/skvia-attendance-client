@@ -25,7 +25,7 @@ export class UserService {
   }
 
   create(request: CreateUserRequest) {
-    return this._http.post<{ userId: string }>(this._base, request);
+    return this._http.post<{ id: string }>(this._base, request);
   }
 
   update(userId: string, data: UpdateUserRequest) {
@@ -37,7 +37,7 @@ export class UserService {
   }
 
   deleteSelected(deleteUsers: DeleteUsersRequest) {
-    return this._http.delete(`${this._base}/`, {
+    return this._http.delete(`${this._base}/batch`, {
       body: deleteUsers
     });
   }

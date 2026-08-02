@@ -1,4 +1,4 @@
-export interface ProblemResponse {
+export interface ApiProblemDetails {
   status: string;
   title: string;
   detail: string;

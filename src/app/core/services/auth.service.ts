@@ -27,7 +27,7 @@ export class AuthService {
     return firstValueFrom(
       this.http.get<CurrentUserDto>(`${environment.API_URL}/auth/me`).pipe(
         tap((me) => {
-          this.userId.set(me.userId);
+          this.userId.set(me.id);
           this.roles.set(me.roles);
           this.permissions.set(me.permissions);
         }),
@@ -52,7 +52,7 @@ export class AuthService {
       ),
 
       tap(me => {
-        this.userId.set(me.userId);
+        this.userId.set(me.id);
         this.roles.set(me.roles);
         this.permissions.set(me.permissions);
       })

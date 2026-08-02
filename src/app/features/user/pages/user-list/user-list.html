@@ -78,7 +78,7 @@
   <tbody>
     @for (data of rowSelectionTable.data; track data) {
     <tr>
-      <td [nzChecked]="setOfCheckedId.has(data.userId)" (nzCheckedChange)="onItemChecked(data.userId, $event)"></td>
+      <td [nzChecked]="setOfCheckedId.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
 
       <td>
         <button nz-button nz-dropdown [nzDropdownMenu]="menu">
@@ -86,7 +86,7 @@
         </button>
         <nz-dropdown-menu #menu="nzDropdownMenu">
           <ul nz-menu>
-            <li nz-menu-item (click)="editUser(data.userId)">Editar</li>
+            <li nz-menu-item (click)="editUser(data.id)">Editar</li>
             <li nz-menu-item (click)="showDeleteUserConfirm(data)">Eliminar</li>
             <li nz-menu-item (click)="openPermissions(data)">Establecer permisos</li>
             <li nz-menu-item (click)="openResetPassword(data)">Restablecer contraseña</li>
@@ -123,6 +123,6 @@
 </nz-table>
 <app-reset-password-modal
   [(visible)]="showResetPasswordModal"
-  [userId]="selectedUser()?.userId ?? ''"
+  [userId]="selectedUser()?.id ?? ''"
   [userName]="selectedUser()?.userName!">
 </app-reset-password-modal>

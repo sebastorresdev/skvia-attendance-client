@@ -1,6 +1,6 @@
 export interface BranchResponse {
-  branchId: string;
+  id: string;
   code: string;
   name: string;
-  description: string | null;
+  address: string | null;
 }

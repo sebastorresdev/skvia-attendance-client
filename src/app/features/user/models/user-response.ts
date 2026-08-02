@@ -1,5 +1,5 @@
 export interface UserResponse {
-  userId: string;
+  id: string;
   branchName: string;
   userName: string;
   photoUrl: string | null;

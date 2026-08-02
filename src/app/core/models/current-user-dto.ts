@@ -1,5 +1,5 @@
 export interface CurrentUserDto {
-  userId: string;
+  id: string;
   roles: string[];
   permissions: string[];
 }

@@ -1,5 +1,5 @@
 export interface UserDetailResponse {
-  userId: string;
+  id: string;
   displayName: string;
   userName: string;
   photoUrl: string | null;
@@ -8,6 +8,6 @@ export interface UserDetailResponse {
   branchIds: string[];
   roleIds: string[];
   isActive: boolean;
-  CreateAt: string;
+  createdAt: string;
   LastModifiedAt: string;
 }

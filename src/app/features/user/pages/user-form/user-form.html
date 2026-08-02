@@ -154,8 +154,8 @@
         <nz-form-control nzErrorTip="Selecciona al menos una sede">
           <nz-select formControlName="branchIds" nzMode="multiple" nzPlaceHolder="Seleccione las sedes" nzShowSearch
             class="w-full">
-            @for (branch of branchList; track branch.branchId) {
-            <nz-option [nzValue]="branch.branchId" [nzLabel]="branch.name"></nz-option>
+            @for (branch of branchList; track branch.id) {
+            <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -207,6 +207,6 @@
 
 <app-reset-password-modal
   [(visible)]="showResetPasswordModal"
-  [userId]="currentUser?.userId!"
+  [userId]="currentUser?.id!"
   [userName]="currentUser?.userName!">
 </app-reset-password-modal>
