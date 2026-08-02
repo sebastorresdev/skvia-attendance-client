@@ -1,0 +1,88 @@
+<!-- HEADER -->
+<header class="flex flex-row justify-between">
+  <!-- TITULO -->
+  <div class="flex flex-row items-start gap-3">
+    <nz-icon class="text-4xl">
+      <svg class="mud-icon-root mud-svg-icon mud-icon-size-large" focusable="false" viewBox="0 0 24 24"
+        aria-hidden="true" role="img">
+        <path d="M0 0h24v24H0z" fill="none"></path>
+        <path
+          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
+        </path>
+      </svg>
+    </nz-icon>
+    <h1 class="mb-0! text-base font-medium">Roles</h1>
+  </div>
+  <!-- ACCIONES -->
+  <div class="flex flex-col gap-2 items-end">
+    <!-- BOTONES -->
+    <div class="flex flex-row items-center gap-1">
+      <button nz-button nzType="text" (click)="loadRoles()">
+        <nz-icon nzType="reload" />
+        Refresh
+      </button>
+      <button nz-button nzType="text" (click)="openNewRoleModal()">
+        <nz-icon nzType="plus" />
+        Nuevo
+      </button>
+      <button nz-button nzType="text" [disabled]="setOfCheckedId.size === 0" (click)="showDeleteSelectedRolesConfirm()">
+        <nz-icon nzType="delete" />
+        Eliminar
+      </button>
+    </div>
+    <!-- FILTROS (OPCIONALES PARA MANTENER LA SIMETRIA) -->
+    <div class="flex flex-row gap-1">
+      <nz-space-compact>
+        <nz-input-wrapper>
+          <input nz-input placeholder="Buscar rol..." nzVariant="underlined" />
+          <nz-icon nzInputSuffix nzType="search" />
+        </nz-input-wrapper>
+      </nz-space-compact>
+    </div>
+  </div>
+</header>
+
+<!-- SEPARACION -->
+<br />
+
+<!-- TABLE -->
+<nz-table #rowSelectionTable nzShowSizeChanger [nzData]="roles()"
+  (nzCurrentPageDataChange)="onCurrentPageDataChange($event)">
+  <thead>
+    <tr>
+      <th [(nzChecked)]="checked" [nzIndeterminate]="indeterminate" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th>Acciones</th>
+      <th>Nombre del Rol</th>
+      <th>Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (data of rowSelectionTable.data; track data.id) {
+    <tr>
+      <td [nzChecked]="setOfCheckedId.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+
+      <td>
+        <button nz-button nz-dropdown [nzDropdownMenu]="menu">
+          <span nz-icon nzType="edit"></span>
+        </button>
+        <nz-dropdown-menu #menu="nzDropdownMenu">
+          <ul nz-menu>
+            <li nz-menu-item (click)="openEditRoleModal(data)">Editar</li>
+            <li nz-menu-item (click)="showDeleteRoleConfirm(data)">Eliminar</li>
+            <li nz-menu-item (click)="openPermissions(data)">Establecer permisos</li>
+          </ul>
+        </nz-dropdown-menu>
+      </td>
+      <td class="font-medium">{{ data.name }}</td>
+      <td class="text-gray-500">{{ data.description || 'Sin descripción' }}</td>
+    </tr>
+    }
+  </tbody>
+</nz-table>
+
+<!-- MODAL -->
+<app-role-form-modal
+  [(visible)]="showRoleModal"
+  [role]="selectedRole()"
+  (saved)="onRoleSaved()">
+</app-role-form-modal>

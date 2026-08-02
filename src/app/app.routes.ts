@@ -26,6 +26,12 @@ export const routes: Routes = [
       },
 
       {
+        path: 'roles',
+        canActivate: [permissionGuard(PERMISSIONS.Roles.View)],
+        loadComponent: () => import('./features/role/pages/role-list/role-list').then(m => m.RoleList)
+      },
+
+      {
         path: 'users',
         canActivate: [permissionGuard(PERMISSIONS.Users.View)],
         children: [
