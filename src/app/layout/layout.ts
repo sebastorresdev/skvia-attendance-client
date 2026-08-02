@@ -33,4 +33,10 @@ export class Layout {
   isCollapsed = false;
   readonly PERMISSIONS = PERMISSIONS;
   menu = MENU;
+
+  hasGroupPermission(group: typeof MENU[number]): boolean {
+    if (!group.children || group.children.length === 0) return true;
+    const userPermissions = this.auth.permissions();
+    return group.children.some(child => !child.permission || userPermissions.includes(child.permission));
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 // NG-ZORRO
@@ -19,6 +19,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 // PROYECTO
 import { UserResponse } from '../../models/user-response';
 import { UserService } from '../../services/user-service';
+import { RoleService } from '../../../role/services/role-service';
+import { RoleResponse } from '../../../role/models/role-response';
 import { Router } from '@angular/router';
 import { ResetPasswordModal } from '../../components/reset-password-modal/reset-password-modal';
 import { DeleteUsersRequest } from '../../models/delete-users-request';
@@ -55,7 +57,33 @@ export class UserList implements OnInit {
   private _modalService = inject(NzModalService);
   private _drawerService = inject(NzDrawerService);
 
-  users = signal<UserResponse[]>([]);
+  private _roleService = inject(RoleService);
+
+  allUsers = signal<UserResponse[]>([]);
+  allRoles = signal<RoleResponse[]>([]);
+  
+  search = signal('');
+  selectedRoleFilter = signal<string | null>(null);
+
+  filteredUsers = computed(() => {
+    const term = this.search().toLowerCase().trim();
+    const roleFilter = this.selectedRoleFilter();
+
+    let result = this.allUsers();
+
+    if (term) {
+      result = result.filter(u => 
+        u.userName.toLowerCase().includes(term) || 
+        (u.email && u.email.toLowerCase().includes(term))
+      );
+    }
+
+    if (roleFilter) {
+      result = result.filter(u => u.roleNames.includes(roleFilter));
+    }
+
+    return result;
+  });
 
   showResetPasswordModal = signal(false);
   selectedUser = signal<UserResponse | null>(null);
@@ -67,6 +95,14 @@ export class UserList implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadRoles();
+  }
+
+  loadRoles(): void {
+    this._roleService.getAll().subscribe({
+      next: (data) => this.allRoles.set(data),
+      error: () => this._messageService.error('Error al cargar roles')
+    });
   }
 
   // ---------- Navegación ----------
@@ -83,7 +119,7 @@ export class UserList implements OnInit {
 
   loadUsers(): void {
     this._userService.getAll().subscribe({
-      next: (data) => this.users.set(data),
+      next: (data) => this.allUsers.set(data),
       error: (error) => {
         console.error('Error al cargar usuarios', error);
         this._messageService.error('No se pudieron cargar los usuarios');
@@ -117,7 +153,7 @@ export class UserList implements OnInit {
   }
 
   refreshCheckedStatus(): void {
-    this.checked = this.listOfCurrentPageData.every((item) => this.setOfCheckedId.has(item.id));
+    this.checked = this.listOfCurrentPageData.length > 0 && this.listOfCurrentPageData.every((item) => this.setOfCheckedId.has(item.id));
     this.indeterminate =
       this.listOfCurrentPageData.some((item) => this.setOfCheckedId.has(item.id)) && !this.checked;
   }
@@ -214,7 +250,26 @@ export class UserList implements OnInit {
   // ---------- Activar / Archivar ----------
 
   toggleActive(user: UserResponse, active: boolean): void {
-    // TODO: llamar a this._userService.archive(user.id) / unarchive(user.id)
-    console.log(active ? 'Activar usuario' : 'Archivar usuario', user.id);
+    // Restaurar temporalmente el estado visual para optimismo o bloquearlo
+    // Llamar al backend para actualizar
+    this._userService.toggleStatus(user.id, active).subscribe({
+      next: () => {
+        this._messageService.success(`El usuario ha sido ${active ? 'activado' : 'desactivado'}`);
+        // Actualizamos localmente
+        user.isActive = active;
+        this.allUsers.update(users => {
+          const index = users.findIndex(u => u.id === user.id);
+          if (index !== -1) {
+            users[index].isActive = active;
+          }
+          return [...users];
+        });
+      },
+      error: (err) => {
+        const errorMessage = parseApiErrorMessage(err);
+        this._messageService.error(errorMessage);
+        this.loadUsers(); // Recargar la lista para revertir el estado visual
+      }
+    });
   }
 }

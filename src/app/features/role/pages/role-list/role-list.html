@@ -34,7 +34,7 @@
     <div class="flex flex-row gap-1">
       <nz-space-compact>
         <nz-input-wrapper>
-          <input nz-input placeholder="Buscar rol..." nzVariant="underlined" />
+          <input nz-input placeholder="Buscar rol..." nzVariant="underlined" [ngModel]="search()" (ngModelChange)="search.set($event)" />
           <nz-icon nzInputSuffix nzType="search" />
         </nz-input-wrapper>
       </nz-space-compact>
@@ -46,7 +46,7 @@
 <br />
 
 <!-- TABLE -->
-<nz-table #rowSelectionTable nzShowSizeChanger [nzData]="roles()"
+<nz-table #rowSelectionTable nzShowSizeChanger [nzData]="filteredRoles()"
   (nzCurrentPageDataChange)="onCurrentPageDataChange($event)">
   <thead>
     <tr>

@@ -19,5 +19,19 @@ export const PERMISSIONS = {
 
   Dashboard: {
     View: 'Permissions.Dashboard.View',
+  },
+
+  Branches: {
+    View: 'Permissions.Branches.View',
+    Create: 'Permissions.Branches.Create',
+    Edit: 'Permissions.Branches.Edit',
+    Delete: 'Permissions.Branches.Delete',
+  },
+
+  Employees: {
+    View: 'Permissions.Employees.View',
+    Create: 'Permissions.Employees.Create',
+    Edit: 'Permissions.Employees.Edit',
+    Delete: 'Permissions.Employees.Delete',
   }
 } as const;

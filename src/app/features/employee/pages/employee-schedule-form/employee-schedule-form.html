@@ -1,0 +1,128 @@
+<div class="flex flex-row items-center justify-between mb-6">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a [routerLink]="['/employees']">Lista Empleados</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>Configurar Horario</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <div class="flex gap-2">
+    <button nz-button type="button" [routerLink]="['/employees']">Cancelar</button>
+    <button nz-button nzType="primary" [nzLoading]="saving()" (click)="saveSchedule()">Guardar Horario</button>
+  </div>
+</div>
+
+<nz-card>
+  @if (loadingData()) {
+    <div class="py-12 flex justify-center">
+      <nz-spin nzSimple></nz-spin>
+    </div>
+  } @else {
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      <div>
+        <h2 class="text-xl font-bold m-0 text-gray-800 dark:text-gray-200">
+          @if (viewMode === 'week') {
+            Semana: {{ currentWeekStart() | date:'dd MMM' }} - {{ currentWeekEnd() | date:'dd MMM yyyy' }}
+          } @else {
+            Mes: {{ currentMonthStart() | date:'MMMM yyyy' | uppercase }}
+          }
+        </h2>
+        <p class="text-gray-500 m-0">
+          Empleado: <strong>{{ currentEmployee?.firstName }} {{ currentEmployee?.lastName }}</strong> ({{ currentEmployee?.code }})
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <nz-segmented [nzOptions]="viewModeOptions" [(ngModel)]="viewMode" (ngModelChange)="onViewModeChange($event)"></nz-segmented>
+        
+        <div class="flex items-center gap-2">
+          <button nz-button (click)="changePeriod(-1)">
+            <nz-icon nzType="left" /> Anterior
+          </button>
+          <nz-date-picker 
+            [nzMode]="viewMode === 'week' ? 'week' : 'month'" 
+            [(ngModel)]="selectedDate" 
+            (ngModelChange)="onPeriodChange($event)"
+            [nzAllowClear]="false">
+          </nz-date-picker>
+          <button nz-button (click)="changePeriod(1)">
+            Siguiente <nz-icon nzType="right" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="form">
+      <div class="grid grid-cols-1 lg:grid-cols-7 gap-4" formArrayName="days">
+        @for (day of daysFormArray.controls; track day; let i = $index) {
+          <div [formGroupName]="i" 
+               class="border rounded-lg p-4 transition-colors"
+               [ngClass]="{'border-primary bg-primary/5': isToday(day.value.date), 'border-gray-200 dark:border-gray-800': !isToday(day.value.date)}">
+            
+            <div class="text-center border-b border-gray-200 dark:border-gray-800 pb-2 mb-3">
+              <div class="text-sm font-semibold text-gray-500 uppercase">{{ getDayName(day.value.date) }}</div>
+              <div class="text-xl font-bold">{{ day.value.date | date:'dd' }}</div>
+            </div>
+
+            <nz-form-item class="mb-3">
+              <nz-form-label class="!pb-1 text-xs">Tipo de Día</nz-form-label>
+              <nz-form-control>
+                <nz-select formControlName="dayType" class="w-full">
+                  <nz-option [nzValue]="1" nzLabel="Día Laborable"></nz-option>
+                  <nz-option [nzValue]="2" nzLabel="Día Libre"></nz-option>
+                  <nz-option [nzValue]="3" nzLabel="Vacaciones"></nz-option>
+                  <nz-option [nzValue]="4" nzLabel="Descanso Médico"></nz-option>
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+
+            @if (day.value.dayType === 1 || day.value.dayType === 5) {
+              <nz-form-item class="mb-3">
+                <nz-form-label class="!pb-1 text-xs" nzRequired>Sede Asignada</nz-form-label>
+                <nz-form-control nzErrorTip="Requerido">
+                  <nz-select formControlName="branchId" class="w-full" nzPlaceHolder="Seleccione Sede">
+                    @for (branch of branches; track branch.id) {
+                      <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+                    }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+
+              <nz-form-item class="mb-3">
+                <nz-form-label class="!pb-1 text-xs">Turno Base (Opcional)</nz-form-label>
+                <nz-form-control>
+                  <nz-select formControlName="baseScheduleId" class="w-full" nzPlaceHolder="Seleccionar Turno" nzAllowClear>
+                    @for (schedule of schedules; track schedule.id) {
+                      <nz-option [nzValue]="schedule.id" [nzLabel]="schedule.name"></nz-option>
+                    }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+
+              <div class="grid grid-cols-2 gap-2">
+                <nz-form-item class="mb-0">
+                  <nz-form-label class="!pb-1 text-xs" nzRequired>Ingreso</nz-form-label>
+                  <nz-form-control nzErrorTip="Req.">
+                    <nz-time-picker formControlName="startTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+                  </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item class="mb-0">
+                  <nz-form-label class="!pb-1 text-xs" nzRequired>Salida</nz-form-label>
+                  <nz-form-control nzErrorTip="Req.">
+                    <nz-time-picker formControlName="endTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+                  </nz-form-control>
+                </nz-form-item>
+              </div>
+            } @else {
+              <div class="py-10 text-center opacity-40">
+                <nz-icon nzType="coffee" class="text-3xl mb-2" />
+                <div class="text-sm">Sin jornada</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </form>
+  }
+</nz-card>

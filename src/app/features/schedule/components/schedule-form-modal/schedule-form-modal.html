@@ -1,0 +1,31 @@
+<form nz-form [formGroup]="scheduleForm" (ngSubmit)="submitForm()" nzLayout="vertical">
+  <nz-form-item>
+    <nz-form-label [nzSm]="24" [nzXs]="24" nzRequired nzFor="name">Nombre del Turno</nz-form-label>
+    <nz-form-control [nzSm]="24" [nzXs]="24" nzErrorTip="Por favor ingrese el nombre">
+      <input nz-input formControlName="name" id="name" placeholder="Ej: Mañana" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <div class="grid grid-cols-2 gap-4">
+    <nz-form-item>
+      <nz-form-label [nzSm]="24" [nzXs]="24" nzRequired nzFor="defaultStartTime">Hora de Entrada</nz-form-label>
+      <nz-form-control [nzSm]="24" [nzXs]="24" nzErrorTip="Requerido">
+        <nz-time-picker formControlName="defaultStartTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSm]="24" [nzXs]="24" nzRequired nzFor="defaultEndTime">Hora de Salida</nz-form-label>
+      <nz-form-control [nzSm]="24" [nzXs]="24" nzErrorTip="Requerido">
+        <nz-time-picker formControlName="defaultEndTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+      </nz-form-control>
+    </nz-form-item>
+  </div>
+
+  <div class="flex justify-end gap-2 mt-4">
+    <button nz-button type="button" (click)="cancel()">Cancelar</button>
+    <button nz-button nzType="primary" [nzLoading]="isLoading" type="submit">
+      Guardar
+    </button>
+  </div>
+</form>

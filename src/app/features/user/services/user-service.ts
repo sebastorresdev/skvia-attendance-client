@@ -68,4 +68,8 @@ export class UserService {
   setOverrides(userId: string, permissionKeys: string[]) {
     return this._http.put<void>(`${this._base}/${userId}/permissions/overrides`, { permissionKeys });
   }
+
+  toggleStatus(userId: string, isActive: boolean) {
+    return this._http.patch<void>(`${this._base}/${userId}/status`, { isActive });
+  }
 }

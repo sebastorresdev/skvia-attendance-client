@@ -18,6 +18,21 @@ export const MENU: MenuGroup[] = [
     ]
   },
   {
+    title: 'Organización',
+    icon: 'bank',
+    children: [
+      { label: 'Sedes', link: '/branches', permission: PERMISSIONS.Branches.View },
+    ]
+  },
+  {
+    title: 'Recursos Humanos',
+    icon: 'team',
+    children: [
+      { label: 'Empleados', link: '/employees', permission: PERMISSIONS.Employees.View },
+      { label: 'Turnos', link: '/schedules', permission: PERMISSIONS.Employees.View },
+    ]
+  },
+  {
     title: 'Form',
     icon: 'form',
     children: [

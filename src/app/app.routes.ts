@@ -42,6 +42,29 @@ export const routes: Routes = [
       },
 
       {
+        path: 'branches',
+        canActivate: [permissionGuard(PERMISSIONS.Branches.View)],
+        loadComponent: () => import('./features/branch/pages/branch-list/branch-list').then(m => m.BranchList)
+      },
+
+      {
+        path: 'employees',
+        canActivate: [permissionGuard(PERMISSIONS.Employees.View)],
+        children: [
+          { path: '', loadComponent: () => import('./features/employee/pages/employee-list/employee-list').then(m => m.EmployeeList) },
+          { path: 'new', loadComponent: () => import('./features/employee/pages/employee-form/employee-form').then(m => m.EmployeeForm) },
+          { path: ':id/schedule', loadComponent: () => import('./features/employee/pages/employee-schedule-form/employee-schedule-form').then(m => m.EmployeeScheduleForm) },
+          { path: ':id', loadComponent: () => import('./features/employee/pages/employee-form/employee-form').then(m => m.EmployeeForm) },
+        ]
+      },
+      
+      {
+        path: 'schedules',
+        canActivate: [permissionGuard(PERMISSIONS.Employees.View)], // Reusing Employees.View for now, or maybe create a new permission if there is one. We can just use Employees.View
+        loadComponent: () => import('./features/schedule/pages/schedule-list/schedule-list').then(m => m.ScheduleList)
+      },
+
+      {
         path: '404',
         loadComponent: () =>
           import('./features/errors/not-found/not-found')

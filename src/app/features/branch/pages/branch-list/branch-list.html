@@ -1,0 +1,73 @@
+<!-- HEADER -->
+<header class="flex flex-row justify-between">
+  <!-- TITULO -->
+  <div class="flex flex-row items-start gap-3">
+    <nz-icon class="text-4xl" nzType="bank"></nz-icon>
+    <h1 class="mb-0! text-base font-medium">Sedes</h1>
+  </div>
+  <!-- ACCIONES -->
+  <div class="flex flex-col gap-2 items-end">
+    <!-- BOTONES -->
+    <div class="flex flex-row items-center gap-1">
+      <button nz-button nzType="text" (click)="loadBranches()">
+        <nz-icon nzType="reload" />
+        Refresh
+      </button>
+      <button nz-button nzType="text" (click)="openNewBranchModal()">
+        <nz-icon nzType="plus" />
+        Nuevo
+      </button>
+      <button nz-button nzType="text" [disabled]="setOfCheckedId.size === 0" (click)="showDeleteSelectedBranchesConfirm()">
+        <nz-icon nzType="delete" />
+        Eliminar
+      </button>
+    </div>
+    <!-- FILTROS -->
+    <div class="flex flex-row gap-1">
+      <nz-space-compact>
+        <nz-input-wrapper>
+          <input nz-input placeholder="Buscar sedes..." nzVariant="underlined" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+          <nz-icon nzInputSuffix nzType="search" />
+        </nz-input-wrapper>
+      </nz-space-compact>
+    </div>
+  </div>
+</header>
+
+<!-- SEPARACION -->
+<br />
+
+<!-- TABLE -->
+<nz-table #basicTable nzShowSizeChanger [nzData]="filteredBranches()"
+  (nzCurrentPageDataChange)="onCurrentPageDataChange($event)">
+  <thead>
+    <tr>
+      <th [(nzChecked)]="checked" [nzIndeterminate]="indeterminate" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th>Acciones</th>
+      <th>Código</th>
+      <th>Nombre</th>
+      <th>Dirección</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (data of basicTable.data; track data.id) {
+    <tr>
+      <td [nzChecked]="setOfCheckedId.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td>
+        <button nz-button nz-dropdown [nzDropdownMenu]="menu">
+          <span nz-icon nzType="edit"></span>
+        </button>
+        <nz-dropdown-menu #menu="nzDropdownMenu">
+          <ul nz-menu>
+            <li nz-menu-item (click)="openEditBranchModal(data)">Editar</li>
+            <li nz-menu-item (click)="showDeleteBranchConfirm(data)">Eliminar</li>
+          </ul>
+        </nz-dropdown-menu>
+      </td>
+      <td class="font-medium font-mono">{{ data.code }}</td>
+      <td class="font-medium">{{ data.name }}</td>
+      <td class="text-gray-500">{{ data.address || '-' }}</td>
+    </tr>
+    }
+  </tbody>
+</nz-table>

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 // NG-ZORRO
@@ -45,7 +45,17 @@ export class RoleList implements OnInit {
   private _modalService = inject(NzModalService);
   private _drawerService = inject(NzDrawerService);
 
-  roles = signal<RoleResponse[]>([]);
+  allRoles = signal<RoleResponse[]>([]);
+  search = signal('');
+
+  filteredRoles = computed(() => {
+    const term = this.search().toLowerCase().trim();
+    if (!term) return this.allRoles();
+    return this.allRoles().filter(r => 
+      r.name.toLowerCase().includes(term) || 
+      (r.description && r.description.toLowerCase().includes(term))
+    );
+  });
 
   // Modal State
   showRoleModal = signal(false);
@@ -65,7 +75,7 @@ export class RoleList implements OnInit {
 
   loadRoles(): void {
     this._roleService.getAll().subscribe({
-      next: (data) => this.roles.set(data),
+      next: (data) => this.allRoles.set(data),
       error: (error) => {
         console.error('Error loading roles', error);
         this._messageService.error('No se pudieron cargar los roles');

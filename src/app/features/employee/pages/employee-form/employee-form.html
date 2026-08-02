@@ -1,0 +1,131 @@
+<div class="flex flex-row items-center justify-between">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a [routerLink]="['/employees']">Lista Empleados</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ isEdit ? 'Editar' : 'Nuevo' }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <div class="flex gap-2">
+    <button nz-button type="button" [routerLink]="['/employees']">Cancelar</button>
+    <button nz-button nzType="primary" [nzLoading]="loading()" (click)="submitForm()">Guardar</button>
+  </div>
+</div>
+
+<nz-divider class="my-4!" />
+
+@if (initialLoading()) {
+<div class="flex flex-col items-center justify-center py-24">
+  <nz-spin nzSimple></nz-spin>
+  <p class="text-sm opacity-60 mt-4">Cargando información...</p>
+</div>
+} @else {
+<form nz-form [formGroup]="form" nzLayout="vertical" class="max-w-5xl">
+  
+  <!-- ============================================ -->
+  <!-- CARD 1: Datos Básicos                        -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Datos Básicos" class="mb-4!">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Nombres</nz-form-label>
+        <nz-form-control nzErrorTip="Requerido (máx 100 char)">
+          <input nz-input formControlName="firstName" placeholder="Ej: Juan Carlos" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Apellidos</nz-form-label>
+        <nz-form-control nzErrorTip="Requerido (máx 100 char)">
+          <input nz-input formControlName="lastName" placeholder="Ej: Pérez Gómez" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Código de Empleado</nz-form-label>
+        <nz-form-control nzErrorTip="Requerido (máx 10 char)">
+          <input nz-input formControlName="code" placeholder="Ej: EMP-001" class="uppercase" />
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </nz-card>
+
+  <!-- ============================================ -->
+  <!-- CARD 2: Identificación                       -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Identificación" class="mb-4!">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Tipo de Documento</nz-form-label>
+        <nz-form-control nzErrorTip="Requerido">
+          <nz-select formControlName="documentType">
+            @for (type of documentTypes; track type.value) {
+              <nz-option [nzValue]="type.value" [nzLabel]="type.label"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Nro. de Documento</nz-form-label>
+        <nz-form-control nzErrorTip="Requerido (máx 20 char)">
+          <input nz-input formControlName="documentNumber" placeholder="Ej: 71234567" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label nzRequired>Fecha de Contratación</nz-form-label>
+        <nz-form-control nzErrorTip="Requerido">
+          <nz-date-picker formControlName="hireDate" class="w-full" nzFormat="yyyy-MM-dd"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </nz-card>
+
+  <!-- ============================================ -->
+  <!-- CARD 3: Empresa y Contacto                   -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Empresa y Contacto" class="mb-4!">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+      <nz-form-item class="mb-0">
+        <nz-form-label>Departamento / Área</nz-form-label>
+        <nz-form-control nzErrorTip="Máx 100 char">
+          <input nz-input formControlName="department" placeholder="Ej: Recursos Humanos" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label>Puesto</nz-form-label>
+        <nz-form-control nzErrorTip="Máx 100 char">
+          <input nz-input formControlName="position" placeholder="Ej: Analista de Planillas" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0 mt-2">
+        <nz-form-label>Correo Electrónico</nz-form-label>
+        <nz-form-control nzErrorTip="Correo inválido">
+          <input nz-input formControlName="email" type="email" placeholder="Ej: jperez@empresa.com" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0 mt-2">
+        <nz-form-label>Teléfono</nz-form-label>
+        <nz-form-control nzErrorTip="Máx 20 char">
+          <input nz-input formControlName="phone" placeholder="Ej: +51 987654321" />
+        </nz-form-control>
+      </nz-form-item>
+      
+      <nz-form-item class="mb-0 mt-2">
+        <nz-form-label>Sede Principal (Opcional)</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="mainBranchId" nzPlaceHolder="Seleccione una sede" nzAllowClear>
+            @for (branch of branches(); track branch.id) {
+              <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </nz-card>
+</form>
+}

@@ -47,10 +47,14 @@
     <!-- FILTROS -->
     <div class="flex flex-row gap-1">
       <nz-select nzAllowClear [style.width.px]="200"
-        nzPlaceHolder="Buscar por rol" nzVariant="underlined" />
+        nzPlaceHolder="Buscar por rol" nzVariant="underlined" [ngModel]="selectedRoleFilter()" (ngModelChange)="selectedRoleFilter.set($event)">
+        @for (role of allRoles(); track role.id) {
+          <nz-option [nzValue]="role.name" [nzLabel]="role.name"></nz-option>
+        }
+      </nz-select>
       <nz-space-compact>
         <nz-input-wrapper>
-          <input nz-input placeholder="Buscar..." nzVariant="underlined" />
+          <input nz-input placeholder="Buscar..." nzVariant="underlined" [ngModel]="search()" (ngModelChange)="search.set($event)" />
           <nz-icon nzInputSuffix nzType="search" />
         </nz-input-wrapper>
       </nz-space-compact>
@@ -62,7 +66,7 @@
 <br />
 
 <!-- TABLE -->
-<nz-table #rowSelectionTable nzShowSizeChanger [nzData]="users()"
+<nz-table #rowSelectionTable nzShowSizeChanger [nzData]="filteredUsers()"
   (nzCurrentPageDataChange)="onCurrentPageDataChange($event)">
   <thead>
     <tr>
