@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { forkJoin, Observable, Observer, switchMap, of, finalize, catchError, Subscription } from 'rxjs';
+import { forkJoin, Observable, Observer, switchMap, of, finalize, catchError, Subscription, map } from 'rxjs';
 
 import { NzCheckboxGroupComponent, NzCheckboxOption } from 'ng-zorro-antd/checkbox';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -327,17 +327,18 @@ export class UserForm implements OnInit {
         switchMap((photoUrl) => this.isEditMode()
           ? this.updateUser$(photoUrl)
           : this.createUser$(photoUrl)),
+        map(() => true),
         catchError((err) => {
           const message = parseApiErrorMessage(err);
           this._messageService.error(message);
           console.error(err);
-          return of(null);
+          return of(false);
         }),
         finalize(() => this.saving.set(false)),
       )
-      .subscribe((result) => {
-        console.log("Resultado esperado", result);
-        if (result !== null) {
+      .subscribe((success) => {
+        console.log("Resultado esperado", success);
+        if (success) {
           console.log(this.isEditMode() ? 'Usuario actualizado' : 'Usuario creado');
           this._messageService.success(this.isEditMode() ? 'Usuario actualizado' : 'Usuario creado');
           this._router.navigate(['/users']);

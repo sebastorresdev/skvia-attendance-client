@@ -49,13 +49,22 @@ export class PermissionDrawer {
     if (!term) return this.groups;
 
     return this.groups
-      .map(g => ({
-        ...g,
-        permissions: g.permissions.filter(p =>
-          p.display.toLowerCase().includes(term) ||
-          p.description.toLowerCase().includes(term)
-        ),
-      }))
+      .map(g => {
+        const groupMatches = g.group.toLowerCase().includes(term) || 
+                             (g.groupDescription && g.groupDescription.toLowerCase().includes(term));
+        
+        if (groupMatches) {
+          return g;
+        }
+
+        return {
+          ...g,
+          permissions: g.permissions.filter(p =>
+            p.display.toLowerCase().includes(term) ||
+            p.description.toLowerCase().includes(term)
+          ),
+        };
+      })
       .filter(g => g.permissions.length > 0);
   });
 

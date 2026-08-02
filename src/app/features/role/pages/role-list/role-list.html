@@ -54,6 +54,7 @@
       <th>Acciones</th>
       <th>Nombre del Rol</th>
       <th>Descripción</th>
+      <th>Última Actualización</th>
     </tr>
   </thead>
   <tbody>
@@ -75,14 +76,12 @@
       </td>
       <td class="font-medium">{{ data.name }}</td>
       <td class="text-gray-500">{{ data.description || 'Sin descripción' }}</td>
+      <td>{{ data.lastModifiedAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
     </tr>
     }
   </tbody>
 </nz-table>
 
 <!-- MODAL -->
-<app-role-form-modal
-  [(visible)]="showRoleModal"
-  [role]="selectedRole()"
-  (saved)="onRoleSaved()">
+<app-role-form-modal [(visible)]="showRoleModal" [role]="selectedRole()" (saved)="onRoleSaved()">
 </app-role-form-modal>

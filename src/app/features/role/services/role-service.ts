@@ -5,6 +5,8 @@ import { RoleResponse } from '../models/role-response';
 import { RoleRequest } from '../models/role-request';
 import { DeleteRolesRequest } from '../models/delete-roles-request';
 import { Observable } from 'rxjs';
+import { PermissionGroup } from '../../../shared/models/permission-group';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -36,8 +38,8 @@ export class RoleService {
     return this._http.delete<void>(`${this._base}/batch`, { body: data });
   }
 
-  getPermissions(roleId: string): Observable<import('../../../shared/models/permission-group').PermissionGroup[]> {
-    return this._http.get<import('../../../shared/models/permission-group').PermissionGroup[]>(`${this._base}/${roleId}/permissions`);
+  getPermissions(roleId: string): Observable<PermissionGroup[]> {
+    return this._http.get<PermissionGroup[]>(`${this._base}/${roleId}/permissions`);
   }
 
   setPermissions(roleId: string, permissionKeys: string[]): Observable<void> {
