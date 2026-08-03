@@ -12,6 +12,12 @@ export const routes: Routes = [
   },
 
   {
+    path: 'kiosk',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/kiosk/pages/kiosk-page').then(m => m.KioskPage),
+  },
+
+  {
     path: '',
     loadComponent: () => import('./layout/layout').then(m => m.Layout),
     canActivate: [authGuard],

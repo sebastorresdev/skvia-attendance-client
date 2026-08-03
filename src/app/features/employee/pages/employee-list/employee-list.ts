@@ -14,7 +14,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzMessageService } from 'ng-zorro-antd/message';
 // PROYECTO
-import { EmployeeResponse } from '../../models/employee-response';
+import { EmployeeResponse, EmployeeStatus } from '../../models/employee-response';
 import { EmployeeService } from '../../services/employee-service';
 import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
 import { DocumentType } from '../../models/document-type';
@@ -103,6 +103,10 @@ export class EmployeeList implements OnInit {
     }
   }
 
+  isEmployeeActive(employee: EmployeeResponse): boolean {
+    return employee.status === EmployeeStatus.Active;
+  }
+
   // ---------- Table Selection ----------
 
   updateCheckedSet(id: string, checked: boolean): void {
@@ -152,6 +156,32 @@ export class EmployeeList implements OnInit {
           },
           error: (err) => {
             console.error('Error deleting employee', err);
+            const errorMessage = parseApiErrorMessage(err);
+            this._messageService.error(errorMessage);
+          },
+        });
+      },
+      nzCancelText: 'Cancelar',
+    });
+  }
+
+  changeStatus(employee: EmployeeResponse): void {
+    const isActivating = employee.status !== EmployeeStatus.Active;
+    const newStatus = isActivating ? EmployeeStatus.Active : EmployeeStatus.Inactive;
+    const actionText = isActivating ? 'Reactivar' : 'Dar de Baja';
+
+    this._modalService.confirm({
+      nzTitle: `¿Estás seguro de que quieres ${actionText.toLowerCase()} a '${employee.firstName} ${employee.lastName}'?`,
+      nzOkText: 'Confirmar',
+      nzOkType: 'primary',
+      nzOnOk: () => {
+        this._employeeService.changeStatus(employee.id, newStatus).subscribe({
+          next: () => {
+            this._messageService.success(`Empleado ${actionText.toLowerCase()}do con éxito`);
+            this.loadEmployees();
+          },
+          error: (err) => {
+            console.error(`Error ${actionText.toLowerCase()} empleado`, err);
             const errorMessage = parseApiErrorMessage(err);
             this._messageService.error(errorMessage);
           },

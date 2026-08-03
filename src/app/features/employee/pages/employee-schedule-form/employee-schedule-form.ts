@@ -191,11 +191,12 @@ export class EmployeeScheduleForm implements OnInit {
 
       const dayGroup = this._fb.group({
         date: [dateStr],
-        dayType: [existing?.dayType ?? ScheduleDayType.WorkDay, Validators.required],
+        dayType: [existing?.dayType ?? null],
         branchId: [defaultBranchId],
         baseScheduleId: [existing?.baseScheduleId ?? null],
         startTime: [startTimeDate],
-        endTime: [endTimeDate]
+        endTime: [endTimeDate],
+        isSaved: [!!existing]
       });
 
       // Update validation based on dayType
@@ -209,10 +210,18 @@ export class EmployeeScheduleForm implements OnInit {
           branchCtrl?.setValidators(Validators.required);
           startCtrl?.setValidators(Validators.required);
           endCtrl?.setValidators(Validators.required);
+          
+          if (!branchCtrl?.value && this.currentEmployee?.mainBranchId) {
+            branchCtrl?.setValue(this.currentEmployee.mainBranchId.toLowerCase(), { emitEvent: false });
+          }
         } else {
           branchCtrl?.clearValidators();
           startCtrl?.clearValidators();
           endCtrl?.clearValidators();
+          
+          branchCtrl?.setValue(null, { emitEvent: false });
+          startCtrl?.setValue(null, { emitEvent: false });
+          endCtrl?.setValue(null, { emitEvent: false });
           baseCtrl?.setValue(null, { emitEvent: false });
         }
         branchCtrl?.updateValueAndValidity();
@@ -267,6 +276,34 @@ export class EmployeeScheduleForm implements OnInit {
     this.onPeriodChange(this.selectedDate);
   }
 
+  goToToday(): void {
+    this.selectedDate = new Date();
+    this.onPeriodChange(this.selectedDate);
+  }
+
+  onBaseScheduleChange(index: number, scheduleId: string | null): void {
+    if (!scheduleId) return;
+    
+    const schedule = this.schedules.find(s => s.id.toLowerCase() === scheduleId.toLowerCase());
+    if (schedule) {
+      const group = this.daysFormArray.at(index) as FormGroup;
+      const baseDate = parseISO(group.get('date')?.value);
+      
+      const startTime = new Date(baseDate);
+      const [sh, sm, ss] = schedule.defaultStartTime.split(':');
+      startTime.setHours(+sh, +sm, +ss || 0);
+
+      const endTime = new Date(baseDate);
+      const [eh, em, es] = schedule.defaultEndTime.split(':');
+      endTime.setHours(+eh, +em, +es || 0);
+
+      group.patchValue({
+        startTime,
+        endTime
+      });
+    }
+  }
+
   isToday(dateStr: string): boolean {
     return isSameDay(parseISO(dateStr), new Date());
   }
@@ -308,9 +345,9 @@ export class EmployeeScheduleForm implements OnInit {
     const request: AssignWeeklyScheduleRequest = {
       startDate: startStr,
       endDate: endStr,
-      days: formValues.map((val: any) => ({
+      days: formValues.filter((val: any) => val.dayType !== null).map((val: any) => ({
         date: val.date,
-        branchId: val.branchId ?? '00000000-0000-0000-0000-000000000000', // GUID empty fallback
+        branchId: val.branchId || this.currentEmployee?.mainBranchId || '00000000-0000-0000-0000-000000000000',
         dayType: val.dayType,
         baseScheduleId: val.baseScheduleId,
         startTime: val.startTime ? format(val.startTime, 'HH:mm:ss') : null,
@@ -322,6 +359,7 @@ export class EmployeeScheduleForm implements OnInit {
       next: () => {
         this._messageService.success('Horario semanal guardado correctamente.');
         this.saving.set(false);
+        this.loadScheduleForCurrentPeriod();
       },
       error: (err) => {
         const msg = parseApiErrorMessage(err);

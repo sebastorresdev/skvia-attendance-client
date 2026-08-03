@@ -10,6 +10,13 @@ export const MENU: MenuGroup[] = [
     ]
   },
   {
+    title: 'Kiosco',
+    icon: 'desktop',
+    children: [
+      { label: 'Marcador', link: '/kiosk', target: '_blank' }
+    ]
+  },
+  {
     title: 'Seguridad',
     icon: 'safety',
     children: [

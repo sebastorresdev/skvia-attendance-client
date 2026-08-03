@@ -13,4 +13,12 @@ export interface EmployeeResponse {
   department?: string;
   photoUrl?: string;
   mainBranchId?: string;
+  mainBranchName?: string;
+  status: EmployeeStatus;
+}
+
+export enum EmployeeStatus {
+  Active = 1,
+  Inactive = 2,
+  Suspended = 3
 }

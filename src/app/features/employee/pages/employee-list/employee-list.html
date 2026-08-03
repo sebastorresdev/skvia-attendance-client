@@ -48,6 +48,7 @@
       <th>Empleado</th>
       <th>Documento</th>
       <th>Departamento / Puesto</th>
+      <th>Estado</th>
     </tr>
   </thead>
   <tbody>
@@ -62,7 +63,9 @@
           <ul nz-menu>
             <li nz-menu-item (click)="navigateToEdit(data)">Editar</li>
             <li nz-menu-item (click)="navigateToSchedule(data)">Configurar Horario</li>
-            <li nz-menu-item (click)="showDeleteConfirm(data)" nzDanger>Eliminar</li>
+            <li nz-menu-divider></li>
+            <li nz-menu-item (click)="changeStatus(data)">{{ isEmployeeActive(data) ? 'Dar de Baja' : 'Reactivar' }}</li>
+            <li nz-menu-item (click)="showDeleteConfirm(data)" nzDanger>Eliminar (Definitivo)</li>
           </ul>
         </nz-dropdown-menu>
       </td>
@@ -72,6 +75,19 @@
       <td class="text-gray-500">
         {{ data.department || '-' }}<br />
         <span class="text-xs text-gray-400">{{ data.position || '-' }}</span>
+      </td>
+      <td>
+        <span class="px-2 py-1 rounded-full text-xs font-medium"
+              [class.bg-green-100]="isEmployeeActive(data)"
+              [class.text-green-700]="isEmployeeActive(data)"
+              [class.dark:bg-green-900]="isEmployeeActive(data)"
+              [class.dark:text-green-300]="isEmployeeActive(data)"
+              [class.bg-gray-100]="!isEmployeeActive(data)"
+              [class.text-gray-700]="!isEmployeeActive(data)"
+              [class.dark:bg-gray-800]="!isEmployeeActive(data)"
+              [class.dark:text-gray-300]="!isEmployeeActive(data)">
+          {{ isEmployeeActive(data) ? 'Activo' : 'De Baja' }}
+        </span>
       </td>
     </tr>
     }

@@ -1,9 +1,9 @@
 export enum ScheduleDayType {
   WorkDay = 1,
   DayOff = 2,
-  Vacation = 3,
-  MedicalLeave = 4,
-  MakeUpDay = 5,
+  MakeUpDay = 3,
+  Vacation = 4,
+  MedicalLeave = 5,
 }
 
 export interface DailyScheduleRequest {

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { EmployeeResponse } from '../models/employee-response';
+import { EmployeeResponse, EmployeeStatus } from '../models/employee-response';
 import { CreateEmployeeRequest } from '../models/create-employee-request';
 import { UpdateEmployeeRequest } from '../models/update-employee-request';
 import { AssignWeeklyScheduleRequest, EmployeeScheduleResponse } from '../models/employee-schedule';
@@ -40,5 +40,9 @@ export class EmployeeService {
 
   assignWeeklySchedule(id: string, request: AssignWeeklyScheduleRequest): Observable<void> {
     return this._http.post<void>(`${this._base}/${id}/schedules/weekly`, request);
+  }
+
+  changeStatus(id: string, status: EmployeeStatus): Observable<void> {
+    return this._http.put<void>(`${this._base}/${id}/status`, { status });
   }
 }

@@ -1,0 +1,81 @@
+<div class="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden bg-gray-900">
+  
+  <!-- Dynamic Background Gradient / Image -->
+  <div class="absolute inset-0 z-0">
+    <!-- Base background -->
+    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2569')] bg-cover bg-center opacity-30"></div>
+    <!-- Overlay Gradients for Depth -->
+    <div class="absolute inset-0 bg-linear-to-br from-blue-900/80 via-gray-900/90 to-black/90"></div>
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px]"></div>
+  </div>
+
+  <!-- Back Button (Floating Top-Left) -->
+  <button nz-button nzType="text" (click)="goBack()" 
+          class="absolute top-6 left-6 z-20 flex! items-center gap-2 px-4! py-2! rounded-full! text-gray-300 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md cursor-pointer border border-white/10">
+    <nz-icon nzType="arrow-left" />
+    <span class="font-medium tracking-wide">Volver al Dashboard</span>
+  </button>
+
+  <!-- Main Glassmorphic Card -->
+  <div class="relative z-10 w-full max-w-lg p-10 flex flex-col items-center text-center 
+              bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] rounded-[2rem] 
+              transform transition-all duration-500 hover:shadow-[0_8px_40px_0_rgba(0,0,0,0.4)]">
+    
+    <!-- Logo / Brand Header -->
+    <div class="mb-8 flex flex-col items-center">
+      <div class="w-16 h-16 mb-4 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
+        </svg>
+      </div>
+      <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-300 tracking-tight">Skvia Attendance</h2>
+      <p class="text-gray-400 font-medium tracking-wider text-sm mt-1 uppercase">Portal de Marcaciones</p>
+    </div>
+
+    <!-- Live Clock Display -->
+    <div class="mb-10 w-full flex flex-col items-center p-6 bg-black/20 rounded-3xl border border-white/5 shadow-inner">
+      <div class="text-6xl sm:text-7xl font-mono font-bold text-white tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] mb-2">
+        {{ currentTime | date:'HH:mm:ss' }}
+      </div>
+      <div class="text-sm sm:text-base text-blue-200/80 font-medium uppercase tracking-[0.2em]">
+        {{ currentTime | date:'EEEE, dd MMMM yyyy' }}
+      </div>
+    </div>
+
+    <!-- Input Field -->
+    <div class="w-full mb-8 relative group">
+      <div class="absolute -inset-1 bg-linear-to-r from-blue-500 to-indigo-500 rounded-2xl blur-sm opacity-25 group-focus-within:opacity-50 transition duration-500"></div>
+      <nz-input-group nzSize="large" nzPrefixIcon="user" 
+                      class="relative rounded-2xl overflow-hidden bg-white/10 border border-white/20 backdrop-blur-md shadow-inner transition-all focus-within:border-blue-400/50">
+        <input type="text" nz-input placeholder="Ingresa tu DNI o Código" [(ngModel)]="identifier" 
+               class="text-center text-xl sm:text-2xl tracking-widest font-semibold text-white placeholder-gray-400 bg-transparent! border-none! py-4! focus:ring-0!" 
+               (keyup.enter)="checkIn()" autocomplete="off" />
+      </nz-input-group>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="w-full flex flex-col sm:flex-row gap-4">
+      <button nz-button nzType="primary" nzSize="large" 
+              class="flex-1 h-16 text-lg rounded-2xl font-bold bg-linear-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 border-none shadow-lg shadow-green-900/30 transition-transform active:scale-95 flex items-center justify-center gap-2"
+              [nzLoading]="isLoading()" (click)="checkIn()">
+        <nz-icon nzType="login" class="text-xl" /> ENTRADA
+      </button>
+      
+      <button nz-button nzSize="large" 
+              class="flex-1 h-16 text-lg rounded-2xl font-bold bg-white/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-400/60 shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+              [nzLoading]="isLoading()" (click)="checkOut()">
+        <nz-icon nzType="logout" class="text-xl" /> SALIDA
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Footer Help -->
+  <div class="absolute bottom-6 text-gray-500/80 text-xs font-medium tracking-wide flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5 bg-black/20">
+    <nz-icon nzType="info-circle" class="text-blue-400/80" /> 
+    <span>Si tienes problemas con tu código, contacta a Recursos Humanos.</span>
+  </div>
+</div>

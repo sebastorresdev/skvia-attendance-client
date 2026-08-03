@@ -50,6 +50,10 @@ export class ScheduleList implements OnInit {
     );
   });
 
+  checked = false;
+  indeterminate = false;
+  setOfCheckedId = new Set<string>();
+
   ngOnInit(): void {
     this.loadSchedules();
   }
@@ -110,5 +114,63 @@ export class ScheduleList implements OnInit {
       },
       nzCancelText: 'Cancelar',
     });
+  }
+
+  showDeleteSelectedConfirm(): void {
+    if (this.setOfCheckedId.size === 0) return;
+    
+    this._modalService.confirm({
+      nzTitle: '¿Estás seguro de eliminar los turnos seleccionados?',
+      nzContent: 'Esta acción no se puede deshacer.',
+      nzOkText: 'Sí, Eliminar',
+      nzOkType: 'primary',
+      nzOkDanger: true,
+      nzOnOk: () => {
+        // Since we don't have a bulk delete, we'll map multiple delete calls.
+        const ids = Array.from(this.setOfCheckedId);
+        let deleted = 0;
+        ids.forEach(id => {
+          this._scheduleService.delete(id).subscribe({
+            next: () => {
+              deleted++;
+              if (deleted === ids.length) {
+                this._messageService.success('Turnos eliminados correctamente');
+                this.setOfCheckedId.clear();
+                this.refreshCheckedStatus();
+                this.loadSchedules();
+              }
+            }
+          });
+        });
+      }
+    });
+  }
+
+  updateCheckedSet(id: string, checked: boolean): void {
+    if (checked) {
+      this.setOfCheckedId.add(id);
+    } else {
+      this.setOfCheckedId.delete(id);
+    }
+  }
+
+  onItemChecked(id: string, checked: boolean): void {
+    this.updateCheckedSet(id, checked);
+    this.refreshCheckedStatus();
+  }
+
+  onAllChecked(value: boolean): void {
+    this.filteredSchedules().forEach(item => this.updateCheckedSet(item.id, value));
+    this.refreshCheckedStatus();
+  }
+
+  onCurrentPageDataChange($event: readonly ScheduleResponse[]): void {
+    this.refreshCheckedStatus();
+  }
+
+  refreshCheckedStatus(): void {
+    const data = this.filteredSchedules();
+    this.checked = data.length > 0 && data.every(item => this.setOfCheckedId.has(item.id));
+    this.indeterminate = data.some(item => this.setOfCheckedId.has(item.id)) && !this.checked;
   }
 }

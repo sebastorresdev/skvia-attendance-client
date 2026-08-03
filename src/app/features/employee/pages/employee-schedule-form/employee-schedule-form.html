@@ -36,6 +36,9 @@
         <nz-segmented [nzOptions]="viewModeOptions" [(ngModel)]="viewMode" (ngModelChange)="onViewModeChange($event)"></nz-segmented>
         
         <div class="flex items-center gap-2">
+          <button nz-button (click)="goToToday()">
+            Hoy
+          </button>
           <button nz-button (click)="changePeriod(-1)">
             <nz-icon nzType="left" /> Anterior
           </button>
@@ -53,73 +56,118 @@
     </div>
 
     <form [formGroup]="form">
-      <div class="grid grid-cols-1 lg:grid-cols-7 gap-4" formArrayName="days">
-        @for (day of daysFormArray.controls; track day; let i = $index) {
-          <div [formGroupName]="i" 
-               class="border rounded-lg p-4 transition-colors"
-               [ngClass]="{'border-primary bg-primary/5': isToday(day.value.date), 'border-gray-200 dark:border-gray-800': !isToday(day.value.date)}">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4" formArrayName="days">
+        @for (day of daysFormArray.controls; track $index) {
+          <div [formGroupName]="$index" 
+               class="bg-white dark:bg-[#1f1f1f] rounded-lg overflow-hidden flex flex-col shadow-sm transition-all hover:shadow-md border-t-4"
+               [class.border-green-400]="day.get('isSaved')?.value && day.get('dayType')?.value === 1"
+               [class.dark:border-green-500]="day.get('isSaved')?.value && day.get('dayType')?.value === 1"
+               [class.border-blue-400]="day.get('isSaved')?.value && day.get('dayType')?.value === 2"
+               [class.dark:border-blue-500]="day.get('isSaved')?.value && day.get('dayType')?.value === 2"
+               [class.border-purple-400]="day.get('isSaved')?.value && day.get('dayType')?.value === 3"
+               [class.dark:border-purple-500]="day.get('isSaved')?.value && day.get('dayType')?.value === 3"
+               [class.border-orange-400]="day.get('isSaved')?.value && day.get('dayType')?.value === 4"
+               [class.dark:border-orange-500]="day.get('isSaved')?.value && day.get('dayType')?.value === 4"
+               [class.border-red-400]="day.get('isSaved')?.value && day.get('dayType')?.value === 5"
+               [class.dark:border-red-500]="day.get('isSaved')?.value && day.get('dayType')?.value === 5"
+               [class.border-transparent]="!day.get('isSaved')?.value && day.get('dayType')?.value !== null"
+               [class.border-dashed]="day.get('dayType')?.value === null"
+               [class.border-gray-400]="day.get('dayType')?.value === null"
+               [class.dark:border-gray-500]="day.get('dayType')?.value === null"
+               [class.border-t-0]="day.get('dayType')?.value === null"
+               [class.border-x]="day.get('dayType')?.value === null"
+               [class.border-y]="day.get('dayType')?.value === null"
+               [class.shadow-none]="day.get('dayType')?.value === null"
+               [ngClass]="{'border-x border-b border-gray-200 dark:border-gray-800': day.get('dayType')?.value !== null}">
             
-            <div class="text-center border-b border-gray-200 dark:border-gray-800 pb-2 mb-3">
-              <div class="text-sm font-semibold text-gray-500 uppercase">{{ getDayName(day.value.date) }}</div>
-              <div class="text-xl font-bold">{{ day.value.date | date:'dd' }}</div>
+            <!-- HEADER DEL DIA -->
+            <div class="text-center py-2 border-b dark:border-gray-800"
+                 [ngClass]="{
+                   'bg-green-50 dark:bg-green-900/20': day.get('isSaved')?.value && day.get('dayType')?.value === 1,
+                   'bg-blue-50 dark:bg-blue-900/20': day.get('isSaved')?.value && day.get('dayType')?.value === 2,
+                   'bg-purple-50 dark:bg-purple-900/20': day.get('isSaved')?.value && day.get('dayType')?.value === 3,
+                   'bg-orange-50 dark:bg-orange-900/20': day.get('isSaved')?.value && day.get('dayType')?.value === 4,
+                   'bg-red-50 dark:bg-red-900/20': day.get('isSaved')?.value && day.get('dayType')?.value === 5,
+                   'bg-gray-50 dark:bg-gray-800/50': !day.get('isSaved')?.value && day.get('dayType')?.value !== null,
+                   'bg-transparent': day.get('dayType')?.value === null
+                 }">
+              <div class="text-xs font-semibold uppercase"
+                   [ngClass]="isToday(day.get('date')?.value) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'">
+                   {{ day.get('date')?.value | date:'EEE' }}
+              </div>
+              <div class="font-bold" 
+                   [ngClass]="[
+                    isToday(day.get('date')?.value) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200',
+                    viewMode === 'week' ? 'text-lg' : 'text-base'
+                   ]">
+                {{ day.get('date')?.value | date:'dd' }}
+              </div>
             </div>
 
-            <nz-form-item class="mb-3">
-              <nz-form-label class="!pb-1 text-xs">Tipo de Día</nz-form-label>
-              <nz-form-control>
-                <nz-select formControlName="dayType" class="w-full">
-                  <nz-option [nzValue]="1" nzLabel="Día Laborable"></nz-option>
-                  <nz-option [nzValue]="2" nzLabel="Día Libre"></nz-option>
-                  <nz-option [nzValue]="3" nzLabel="Vacaciones"></nz-option>
-                  <nz-option [nzValue]="4" nzLabel="Descanso Médico"></nz-option>
-                </nz-select>
-              </nz-form-control>
-            </nz-form-item>
-
-            @if (day.value.dayType === 1 || day.value.dayType === 5) {
+            <!-- CUERPO DEL DIA -->
+            <div [ngClass]="{'p-4': viewMode === 'week', 'p-2': viewMode === 'month'}" class="flex-1 flex flex-col">
               <nz-form-item class="mb-3">
-                <nz-form-label class="!pb-1 text-xs" nzRequired>Sede Asignada</nz-form-label>
-                <nz-form-control nzErrorTip="Requerido">
-                  <nz-select formControlName="branchId" class="w-full" nzPlaceHolder="Seleccione Sede">
-                    @for (branch of branches; track branch.id) {
-                      <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
-                    }
-                  </nz-select>
-                </nz-form-control>
-              </nz-form-item>
-
-              <nz-form-item class="mb-3">
-                <nz-form-label class="!pb-1 text-xs">Turno Base (Opcional)</nz-form-label>
+                <nz-form-label class="!pb-1 text-xs text-gray-500 dark:text-gray-400">Tipo de Día</nz-form-label>
                 <nz-form-control>
-                  <nz-select formControlName="baseScheduleId" class="w-full" nzPlaceHolder="Seleccionar Turno" nzAllowClear>
-                    @for (schedule of schedules; track schedule.id) {
-                      <nz-option [nzValue]="schedule.id" [nzLabel]="schedule.name"></nz-option>
-                    }
+                  <nz-select formControlName="dayType" class="w-full" [nzSize]="viewMode === 'month' ? 'small' : 'default'" nzPlaceHolder="Sin Asignar" nzAllowClear>
+                    <nz-option [nzValue]="1" nzLabel="Día Laborable"></nz-option>
+                    <nz-option [nzValue]="2" nzLabel="Día Libre"></nz-option>
+                    <nz-option [nzValue]="4" nzLabel="Vacaciones"></nz-option>
+                    <nz-option [nzValue]="5" nzLabel="Descanso Médico"></nz-option>
                   </nz-select>
                 </nz-form-control>
               </nz-form-item>
 
-              <div class="grid grid-cols-2 gap-2">
-                <nz-form-item class="mb-0">
-                  <nz-form-label class="!pb-1 text-xs" nzRequired>Ingreso</nz-form-label>
-                  <nz-form-control nzErrorTip="Req.">
-                    <nz-time-picker formControlName="startTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+              @if (day.get('dayType')?.value === 1) {
+                <nz-form-item class="mb-3">
+                  <nz-form-label class="!pb-1 text-xs" nzRequired>Sede Asignada</nz-form-label>
+                  <nz-form-control nzErrorTip="Requerido">
+                    <nz-select formControlName="branchId" class="w-full" nzPlaceHolder="Seleccione Sede" [nzSize]="viewMode === 'month' ? 'small' : 'default'">
+                      @for (branch of branches; track branch.id) {
+                        <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+                      }
+                    </nz-select>
                   </nz-form-control>
                 </nz-form-item>
 
-                <nz-form-item class="mb-0">
-                  <nz-form-label class="!pb-1 text-xs" nzRequired>Salida</nz-form-label>
-                  <nz-form-control nzErrorTip="Req.">
-                    <nz-time-picker formControlName="endTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+                <nz-form-item class="mb-3">
+                  <nz-form-label class="!pb-1 text-xs">Turno Base (Opcional)</nz-form-label>
+                  <nz-form-control>
+                    <nz-select formControlName="baseScheduleId" class="w-full" nzPlaceHolder="Seleccionar Turno" nzAllowClear (ngModelChange)="onBaseScheduleChange($index, $event)" [nzSize]="viewMode === 'month' ? 'small' : 'default'">
+                      @for (schedule of schedules; track schedule.id) {
+                        <nz-option [nzValue]="schedule.id" [nzLabel]="schedule.name"></nz-option>
+                      }
+                    </nz-select>
                   </nz-form-control>
                 </nz-form-item>
-              </div>
-            } @else {
-              <div class="py-10 text-center opacity-40">
-                <nz-icon nzType="coffee" class="text-3xl mb-2" />
-                <div class="text-sm">Sin jornada</div>
-              </div>
-            }
+
+                <div class="grid grid-cols-2 gap-2">
+                  <nz-form-item class="mb-0">
+                    <nz-form-label class="!pb-1 text-xs" nzRequired>Ingreso</nz-form-label>
+                    <nz-form-control>
+                      <nz-time-picker formControlName="startTime" nzFormat="HH:mm" [nzMinuteStep]="15" class="w-full" [nzSize]="viewMode === 'month' ? 'small' : 'default'"></nz-time-picker>
+                    </nz-form-control>
+                  </nz-form-item>
+
+                  <nz-form-item class="mb-0">
+                    <nz-form-label class="!pb-1 text-xs" nzRequired>Salida</nz-form-label>
+                    <nz-form-control>
+                      <nz-time-picker formControlName="endTime" nzFormat="HH:mm" [nzMinuteStep]="15" class="w-full" [nzSize]="viewMode === 'month' ? 'small' : 'default'"></nz-time-picker>
+                    </nz-form-control>
+                  </nz-form-item>
+                </div>
+              } @else if (day.get('dayType')?.value === null) {
+                <div class="py-10 text-center opacity-40">
+                  <nz-icon nzType="dash" class="text-3xl mb-2" />
+                  <div class="text-sm">Sin Asignar</div>
+                </div>
+              } @else {
+                <div class="py-10 text-center opacity-40">
+                  <nz-icon nzType="coffee" class="text-3xl mb-2" />
+                  <div class="text-sm">Sin jornada</div>
+                </div>
+              }
+            </div>
           </div>
         }
       </div>
