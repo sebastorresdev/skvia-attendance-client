@@ -3,4 +3,5 @@ export interface BranchResponse {
   code: string;
   name: string;
   address: string | null;
+  tardinessToleranceMinutes: number;
 }

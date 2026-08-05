@@ -13,7 +13,7 @@ export const routes: Routes = [
 
   {
     path: 'kiosk',
-    canActivate: [authGuard],
+    // Kiosk is now a public screen (but locked by default without token)
     loadComponent: () => import('./features/kiosk/pages/kiosk-page').then(m => m.KioskPage),
   },
 
@@ -63,11 +63,26 @@ export const routes: Routes = [
           { path: ':id', loadComponent: () => import('./features/employee/pages/employee-form/employee-form').then(m => m.EmployeeForm) },
         ]
       },
+
+      {
+        path: 'kiosk-devices',
+        canActivate: [permissionGuard(PERMISSIONS.Branches.View)], // Reusing Branches view for now
+        children: [
+          { path: '', loadComponent: () => import('./features/kiosk-devices/pages/device-list/device-list').then(m => m.DeviceList) },
+          { path: 'link', loadComponent: () => import('./features/kiosk-devices/pages/device-link/device-link').then(m => m.DeviceLink) },
+        ]
+      },
       
       {
         path: 'schedules',
         canActivate: [permissionGuard(PERMISSIONS.Employees.View)], // Reusing Employees.View for now, or maybe create a new permission if there is one. We can just use Employees.View
         loadComponent: () => import('./features/schedule/pages/schedule-list/schedule-list').then(m => m.ScheduleList)
+      },
+
+      {
+        path: 'attendance-report',
+        canActivate: [permissionGuard(PERMISSIONS.Employees.View)], // Reusing Employees.View for now
+        loadComponent: () => import('./features/attendance-report/pages/attendance-report/attendance-report.component').then(m => m.AttendanceReportComponent)
       },
 
       {

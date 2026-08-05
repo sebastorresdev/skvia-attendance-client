@@ -2,9 +2,7 @@
   
   <!-- Dynamic Background Gradient / Image -->
   <div class="absolute inset-0 z-0">
-    <!-- Base background -->
     <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2569')] bg-cover bg-center opacity-30"></div>
-    <!-- Overlay Gradients for Depth -->
     <div class="absolute inset-0 bg-linear-to-br from-blue-900/80 via-gray-900/90 to-black/90"></div>
     <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]"></div>
     <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px]"></div>
@@ -17,8 +15,27 @@
     <span class="font-medium tracking-wide">Volver al Dashboard</span>
   </button>
 
-  <!-- Main Glassmorphic Card -->
-  <div class="relative z-10 w-full max-w-lg p-10 flex flex-col items-center text-center 
+  <!-- LOCKED STATE SCREEN -->
+  <div *ngIf="isLocked()" class="relative z-10 w-full max-w-md p-10 flex flex-col items-center text-center 
+              bg-white/5 backdrop-blur-2xl border border-red-500/30 shadow-[0_8px_32px_0_rgba(255,0,0,0.2)] rounded-[2rem]">
+    
+    <div class="w-20 h-20 mb-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
+      <nz-icon nzType="lock" class="text-4xl text-red-400" />
+    </div>
+    
+    <h2 class="text-3xl font-bold text-white mb-2">Dispositivo Bloqueado</h2>
+    <p class="text-gray-400 mb-8 text-sm leading-relaxed">
+      Este dispositivo no ha sido autorizado para registrar asistencias o su acceso ha sido revocado.
+    </p>
+
+    <button nz-button nzType="primary" nzSize="large" (click)="goToAdminLink()"
+            class="w-full h-14 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 border-none shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2">
+      <nz-icon nzType="setting" /> Vincular Dispositivo (Admin)
+    </button>
+  </div>
+
+  <!-- ACTIVE STATE SCREEN -->
+  <div *ngIf="!isLocked()" class="relative z-10 w-full max-w-lg p-10 flex flex-col items-center text-center 
               bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] rounded-[2rem] 
               transform transition-all duration-500 hover:shadow-[0_8px_40px_0_rgba(0,0,0,0.4)]">
     

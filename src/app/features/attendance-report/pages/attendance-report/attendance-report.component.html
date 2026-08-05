@@ -1,0 +1,100 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-xl font-semibold dark:text-white">Reporte de Asistencias</h2>
+      <p class="text-gray-500">Consulta las marcaciones del personal.</p>
+    </div>
+    <button nz-button nzType="dashed" (click)="seedData()" [nzLoading]="seeding()">
+      <span nz-icon nzType="database"></span>
+      Generar Datos (DEV)
+    </button>
+  </div>
+
+  <nz-card>
+    <form nz-form [formGroup]="form" class="mb-4" (ngSubmit)="search()">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <nz-form-item class="mb-0">
+          <nz-form-control>
+            <nz-range-picker formControlName="dateRange" class="w-full"></nz-range-picker>
+          </nz-form-control>
+        </nz-form-item>
+        
+        <nz-form-item class="mb-0">
+          <nz-form-control>
+            <nz-select formControlName="branchId" nzPlaceHolder="Filtrar por Sede" nzAllowClear class="w-full">
+              @for (branch of branches(); track branch.id) {
+                <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+              }
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item class="mb-0">
+          <nz-form-control>
+            <input nz-input formControlName="search" placeholder="Buscar empleado..." />
+          </nz-form-control>
+        </nz-form-item>
+
+        <div>
+          <button nz-button nzType="primary" type="submit" [nzLoading]="loading()">
+            <span nz-icon nzType="search"></span> Buscar
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <nz-table #basicTable [nzData]="attendances()" [nzLoading]="loading()" [nzPageSize]="10" nzSize="middle">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Empleado</th>
+          <th>Sede</th>
+          <th>Asignado</th>
+          <th>Entrada</th>
+          <th>Salida</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (data of basicTable.data; track data.id) {
+          <tr>
+            <td>{{ data.date | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <div class="font-medium">{{ data.employeeName }}</div>
+              <div class="text-xs text-gray-500">{{ data.employeeCode }}</div>
+            </td>
+            <td>{{ data.branchName }}</td>
+            <td>
+              @if (data.assignedStartTime) {
+                {{ data.assignedStartTime | slice:0:5 }}
+              } @else {
+                <span class="text-gray-400">N/A</span>
+              }
+            </td>
+            <td>
+              @if (data.checkIn) {
+                <span [class.text-red-500]="data.isLate">{{ data.checkIn | date:'HH:mm' }}</span>
+              } @else {
+                -
+              }
+            </td>
+            <td>
+              @if (data.checkOut) {
+                {{ data.checkOut | date:'HH:mm' }}
+              } @else {
+                -
+              }
+            </td>
+            <td>
+              @if (data.isLate) {
+                <nz-tag nzColor="error">Tarde ({{ data.tardinessMinutes }} min)</nz-tag>
+              } @else {
+                <nz-tag nzColor="success">Puntual</nz-tag>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

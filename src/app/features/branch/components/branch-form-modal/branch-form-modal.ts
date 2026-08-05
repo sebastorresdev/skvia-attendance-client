@@ -45,7 +45,8 @@ export class BranchFormModal implements OnInit {
     this.form = this._fb.group({
       code: [this.branch?.code || '', [Validators.required, Validators.maxLength(10)]],
       name: [this.branch?.name || '', [Validators.required, Validators.maxLength(100)]],
-      address: [this.branch?.address || '', [Validators.maxLength(250)]]
+      address: [this.branch?.address || '', [Validators.maxLength(250)]],
+      tardinessToleranceMinutes: [this.branch?.tardinessToleranceMinutes || 0, [Validators.min(0)]]
     });
   }
 
@@ -61,7 +62,8 @@ export class BranchFormModal implements OnInit {
       const request = {
         code: val.code.trim().toUpperCase(),
         name: val.name.trim(),
-        address: val.address ? val.address.trim() : null
+        address: val.address ? val.address.trim() : null,
+        tardinessToleranceMinutes: val.tardinessToleranceMinutes || 0
       };
 
       const obs$ = (this.isEdit 

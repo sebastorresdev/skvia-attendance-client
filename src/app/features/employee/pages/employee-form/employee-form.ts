@@ -24,6 +24,9 @@ import { DocumentType } from '../../models/document-type';
 import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
 import { EmployeeResponse } from '../../models/employee-response';
 import { BranchResponse } from '../../../branch/models/branch-response';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { UserService } from '../../../user/services/user-service';
+import { UserResponse } from '../../../user/models/user-response';
 
 @Component({
   selector: 'app-employee-form',
@@ -43,6 +46,7 @@ import { BranchResponse } from '../../../branch/models/branch-response';
     NzSpinModule,
     NzBreadCrumbModule,
     NzDividerModule,
+    NzSwitchModule,
     RouterLink
   ],
   templateUrl: './employee-form.html'
@@ -56,6 +60,7 @@ export class EmployeeForm implements OnInit {
   private _location = inject(Location);
 
   private _branchService = inject(BranchService);
+  private _userService = inject(UserService);
 
   form!: FormGroup;
   isEdit = false;
@@ -63,6 +68,7 @@ export class EmployeeForm implements OnInit {
   loading = signal(false);
   initialLoading = signal(false);
   branches = signal<BranchResponse[]>([]);
+  users = signal<UserResponse[]>([]);
 
   // Enums for template
   documentTypes = [
@@ -74,6 +80,7 @@ export class EmployeeForm implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadUsers();
     
     this.employeeId = this._route.snapshot.paramMap.get('id');
     if (this.employeeId) {
@@ -86,6 +93,13 @@ export class EmployeeForm implements OnInit {
     this._branchService.getAll().subscribe({
       next: (data) => this.branches.set(data),
       error: () => this._messageService.error('Error al cargar sedes')
+    });
+  }
+
+  private loadUsers(): void {
+    this._userService.getAll().subscribe({
+      next: (data) => this.users.set(data),
+      error: () => this._messageService.error('Error al cargar usuarios')
     });
   }
 
@@ -102,7 +116,9 @@ export class EmployeeForm implements OnInit {
       position: ['', [Validators.maxLength(100)]],
       department: ['', [Validators.maxLength(100)]],
       photoUrl: ['', [Validators.maxLength(500)]],
-      mainBranchId: [null]
+      mainBranchId: [null],
+      mobileCheckInEnabled: [false],
+      applicationUserId: [null]
     });
   }
 
@@ -123,7 +139,9 @@ export class EmployeeForm implements OnInit {
           position: emp.position,
           department: emp.department,
           photoUrl: emp.photoUrl,
-          mainBranchId: emp.mainBranchId || null
+          mainBranchId: emp.mainBranchId || null,
+          mobileCheckInEnabled: (emp as any).mobileCheckInEnabled || false,
+          applicationUserId: (emp as any).applicationUserId || null
         });
         this.initialLoading.set(false);
       },
@@ -165,7 +183,9 @@ export class EmployeeForm implements OnInit {
       position: val.position ? val.position.trim() : null,
       department: val.department ? val.department.trim() : null,
       photoUrl: val.photoUrl ? val.photoUrl.trim() : null,
-      mainBranchId: val.mainBranchId || null
+      mainBranchId: val.mainBranchId || null,
+      mobileCheckInEnabled: val.mobileCheckInEnabled,
+      applicationUserId: val.applicationUserId || null
     };
 
     const obs$ = this.isEdit 

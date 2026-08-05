@@ -13,7 +13,7 @@ export const MENU: MenuGroup[] = [
     title: 'Kiosco',
     icon: 'desktop',
     children: [
-      { label: 'Marcador', link: '/kiosk', target: '_blank' }
+      { label: 'Dispositivos', link: '/kiosk-devices', permission: PERMISSIONS.Branches.View } // TODO: Use proper permission
     ]
   },
   {
@@ -37,13 +37,7 @@ export const MENU: MenuGroup[] = [
     children: [
       { label: 'Empleados', link: '/employees', permission: PERMISSIONS.Employees.View },
       { label: 'Turnos', link: '/schedules', permission: PERMISSIONS.Employees.View },
-    ]
-  },
-  {
-    title: 'Form',
-    icon: 'form',
-    children: [
-      { label: 'Basic Form', link: '/form/basic' } // 🔥 sin permiso
+      { label: 'Reportes de Asistencia', link: '/attendance-report', permission: PERMISSIONS.Employees.View },
     ]
   }
 ] as const;

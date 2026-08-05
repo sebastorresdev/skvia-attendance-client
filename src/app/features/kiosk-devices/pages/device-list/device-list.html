@@ -1,0 +1,59 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-xl font-semibold dark:text-white">Dispositivos Kiosko</h2>
+      <p class="text-gray-500">Administra los dispositivos autorizados para realizar marcaciones.</p>
+    </div>
+    <a nz-button nzType="default" href="/kiosk" target="_blank">
+      <span nz-icon nzType="desktop"></span>
+      Abrir Marcador
+    </a>
+  </div>
+
+  <nz-card>
+    <nz-table #basicTable [nzData]="devices()" [nzLoading]="isLoading()" [nzFrontPagination]="true" [nzPageSize]="10">
+      <thead>
+        <tr>
+          <th>Nombre del Dispositivo</th>
+          <th>Sede Asignada</th>
+          <th>Fecha de Vinculación</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of basicTable.data">
+          <td class="font-medium">{{ data.name }}</td>
+          <td>
+            <nz-tag [nzColor]="'blue'">{{ data.branchName }}</nz-tag>
+          </td>
+          <td>{{ data.createdAt | date:'short' }}</td>
+          <td>
+            <nz-tag [nzColor]="data.isActive ? 'success' : 'error'">
+              {{ data.isActive ? 'Activo' : 'Revocado' }}
+            </nz-tag>
+          </td>
+          <td>
+            <div class="flex gap-2">
+              <button nz-button nzType="text" nzDanger 
+                      *ngIf="data.isActive"
+                      nz-popconfirm 
+                      nzPopconfirmTitle="¿Estás seguro de revocar este dispositivo? Ya no podrá registrar asistencias." 
+                      (nzOnConfirm)="revokeDevice(data.id)">
+                <nz-icon nzType="stop" /> Revocar
+              </button>
+              
+              <button nz-button nzType="text" nzDanger 
+                      *ngIf="!data.isActive"
+                      nz-popconfirm 
+                      nzPopconfirmTitle="¿Estás seguro de eliminar este dispositivo de forma permanente?" 
+                      (nzOnConfirm)="deleteDevice(data.id)">
+                <nz-icon nzType="delete" /> Eliminar
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

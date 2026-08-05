@@ -127,5 +127,32 @@
       </nz-form-item>
     </div>
   </nz-card>
+
+  <!-- ============================================ -->
+  <!-- CARD 4: Configuración de Asistencia          -->
+  <!-- ============================================ -->
+  <nz-card nzTitle="Configuración de Asistencia" class="mb-4!">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+      <nz-form-item class="mb-0 flex items-center h-full">
+        <nz-form-label>Habilitar Marcación Móvil</nz-form-label>
+        <nz-form-control>
+          <nz-switch formControlName="mobileCheckInEnabled"></nz-switch>
+          <span class="ml-2 text-gray-500 text-sm">Permite a este empleado registrar asistencia desde la app móvil.</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-label>Vincular Usuario del Sistema</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="applicationUserId" nzPlaceHolder="Seleccione un usuario" nzAllowClear>
+            @for (user of users(); track user.id) {
+              <nz-option [nzValue]="user.id" [nzLabel]="user.userName"></nz-option>
+            }
+          </nz-select>
+          <p class="text-xs text-gray-400 mt-1">Requerido si se habilita la marcación móvil.</p>
+        </nz-form-control>
+      </nz-form-item>
+    </div>
+  </nz-card>
 </form>
 }

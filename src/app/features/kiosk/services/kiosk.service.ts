@@ -7,6 +7,11 @@ export interface AttendanceRequest {
   employeeIdentifier: string;
   branchId: string;
   photoUrl: string;
+  source: number;
+  latitude?: number;
+  longitude?: number;
+  deviceName?: string;
+  deviceToken?: string;
 }
 
 export interface Branch {

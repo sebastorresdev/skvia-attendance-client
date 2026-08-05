@@ -15,6 +15,8 @@ export interface EmployeeResponse {
   mainBranchId?: string;
   mainBranchName?: string;
   status: EmployeeStatus;
+  mobileCheckInEnabled: boolean;
+  applicationUserId?: string;
 }
 
 export enum EmployeeStatus {

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription, interval } from 'rxjs';
@@ -8,9 +8,8 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { KioskService, AttendanceRequest } from '../services/kiosk.service';
-import { environment } from '../../../../environments/environment';
 import { parseApiErrorMessage } from '../../../shared/utils/api-error.util';
-import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-kiosk-page',
@@ -32,17 +31,19 @@ import { AuthService } from '../../../core/services/auth.service';
 export class KioskPage implements OnInit, OnDestroy {
   private _kioskService = inject(KioskService);
   private _messageService = inject(NzMessageService);
-  private _auth = inject(AuthService);
   private _cdr = inject(ChangeDetectorRef);
   private _router = inject(Router);
+  private _route = inject(ActivatedRoute);
   
   currentTime: Date = new Date();
   identifier: string = '';
   isLoading = signal(false);
+  isLocked = signal(true);
   
   private timeSubscription?: Subscription;
 
   private _branchId = '';
+  private _token = '';
 
   ngOnInit() {
     this.timeSubscription = interval(1000).subscribe(() => {
@@ -50,23 +51,39 @@ export class KioskPage implements OnInit, OnDestroy {
       this._cdr.markForCheck();
     });
 
-    const currentUserId = this._auth.userId();
-    if (currentUserId) {
-      this._kioskService.getKioskBranch(currentUserId).subscribe({
-        next: (branchId) => {
-          if (branchId) {
-            this._branchId = branchId;
-          } else {
-            this._messageService.warning('Advertencia: Tu usuario no tiene ninguna sucursal asignada.', { nzDuration: 0 });
-          }
-        },
-        error: () => {
-          this._messageService.error('Error al intentar cargar la sucursal del kiosco.');
-        }
-      });
+    // Check if URL has token and branchId (Redirect from Admin)
+    this._route.queryParams.subscribe(params => {
+      const urlToken = params['token'];
+      const urlBranchId = params['branchId'];
+
+      if (urlToken && urlBranchId) {
+        localStorage.setItem('kiosk_token', urlToken);
+        localStorage.setItem('kiosk_branch_id', urlBranchId);
+        
+        // Remove query params from URL without reloading
+        this._router.navigate([], {
+          relativeTo: this._route,
+          queryParams: { token: null, branchId: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+
+      this.verifyDeviceStatus();
+    });
+  }
+
+  verifyDeviceStatus() {
+    const token = localStorage.getItem('kiosk_token');
+    const branchId = localStorage.getItem('kiosk_branch_id');
+
+    if (token && branchId) {
+      this._token = token;
+      this._branchId = branchId;
+      this.isLocked.set(false);
     } else {
-      this._messageService.error('Error: No se encontró un usuario autenticado para el kiosco.');
+      this.isLocked.set(true);
     }
+    this._cdr.markForCheck();
   }
 
   ngOnDestroy() {
@@ -79,23 +96,32 @@ export class KioskPage implements OnInit, OnDestroy {
     this._router.navigate(['/']);
   }
 
-  checkIn() {
-    if (!this._branchId) {
-      this._messageService.error('El kiosco no tiene una sucursal asignada.');
-      return;
-    }
+  goToAdminLink() {
+    // Generate a callback URL to return here
+    const callbackUrl = encodeURIComponent(window.location.origin + '/kiosk');
+    this._router.navigateByUrl(`/kiosk-devices/link?callbackUrl=${callbackUrl}`);
+  }
 
+  buildRequest(): AttendanceRequest {
+    return {
+      employeeIdentifier: this.identifier,
+      branchId: this._branchId,
+      photoUrl: 'kiosk-photo.jpg', // Simulado MVP
+      source: 0, // Kiosk
+      deviceToken: this._token
+    };
+  }
+
+  checkIn() {
+    if (this.isLocked()) return;
+    
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
     }
 
     this.isLoading.set(true);
-    const req: AttendanceRequest = {
-      employeeIdentifier: this.identifier,
-      branchId: this._branchId,
-      photoUrl: 'kiosk-photo.jpg' // Simulado MVP
-    };
+    const req = this.buildRequest();
 
     this._kioskService.checkIn(req).subscribe({
       next: () => {
@@ -109,7 +135,14 @@ export class KioskPage implements OnInit, OnDestroy {
       error: (err) => {
         setTimeout(() => {
           this.isLoading.set(false);
-          this._messageService.error(parseApiErrorMessage(err));
+          if (err.status === 401 || err.status === 403) {
+            localStorage.removeItem('kiosk_token');
+            localStorage.removeItem('kiosk_branch_id');
+            this.verifyDeviceStatus();
+            this._messageService.error('Dispositivo no autorizado o revocado.');
+          } else {
+            this._messageService.error(parseApiErrorMessage(err));
+          }
           this._cdr.markForCheck();
         });
       }
@@ -117,22 +150,15 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   checkOut() {
-    if (!this._branchId) {
-      this._messageService.error('El kiosco no tiene una sucursal asignada.');
-      return;
-    }
-
+    if (this.isLocked()) return;
+    
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
     }
 
     this.isLoading.set(true);
-    const req: AttendanceRequest = {
-      employeeIdentifier: this.identifier,
-      branchId: this._branchId,
-      photoUrl: 'kiosk-photo.jpg' // Simulado MVP
-    };
+    const req = this.buildRequest();
 
     this._kioskService.checkOut(req).subscribe({
       next: () => {
@@ -146,7 +172,14 @@ export class KioskPage implements OnInit, OnDestroy {
       error: (err) => {
         setTimeout(() => {
           this.isLoading.set(false);
-          this._messageService.error(parseApiErrorMessage(err));
+          if (err.status === 401 || err.status === 403) {
+            localStorage.removeItem('kiosk_token');
+            localStorage.removeItem('kiosk_branch_id');
+            this.verifyDeviceStatus();
+            this._messageService.error('Dispositivo no autorizado o revocado.');
+          } else {
+            this._messageService.error(parseApiErrorMessage(err));
+          }
           this._cdr.markForCheck();
         });
       }
