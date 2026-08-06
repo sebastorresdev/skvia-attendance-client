@@ -5,7 +5,7 @@
       <p class="text-gray-500">Administra los dispositivos autorizados para realizar marcaciones.</p>
     </div>
     <a nz-button nzType="default" href="/kiosk" target="_blank">
-      <span nz-icon nzType="desktop"></span>
+      <nz-icon nzType="desktop"></nz-icon>
       Abrir Marcador
     </a>
   </div>
@@ -35,19 +35,15 @@
           </td>
           <td>
             <div class="flex gap-2">
-              <button nz-button nzType="text" nzDanger 
-                      *ngIf="data.isActive"
-                      nz-popconfirm 
-                      nzPopconfirmTitle="¿Estás seguro de revocar este dispositivo? Ya no podrá registrar asistencias." 
-                      (nzOnConfirm)="revokeDevice(data.id)">
+              <button nz-button nzType="text" nzDanger *ngIf="data.isActive" nz-popconfirm
+                nzPopconfirmTitle="¿Estás seguro de revocar este dispositivo? Ya no podrá registrar asistencias."
+                (nzOnConfirm)="revokeDevice(data.id)">
                 <nz-icon nzType="stop" /> Revocar
               </button>
-              
-              <button nz-button nzType="text" nzDanger 
-                      *ngIf="!data.isActive"
-                      nz-popconfirm 
-                      nzPopconfirmTitle="¿Estás seguro de eliminar este dispositivo de forma permanente?" 
-                      (nzOnConfirm)="deleteDevice(data.id)">
+
+              <button nz-button nzType="text" nzDanger *ngIf="!data.isActive" nz-popconfirm
+                nzPopconfirmTitle="¿Estás seguro de eliminar este dispositivo de forma permanente?"
+                (nzOnConfirm)="deleteDevice(data.id)">
                 <nz-icon nzType="delete" /> Eliminar
               </button>
             </div>

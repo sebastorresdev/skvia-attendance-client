@@ -8,7 +8,7 @@
       <p class="text-gray-500 text-sm">Gestiona y evalúa solicitudes de dispensa por tardanzas y ausencias.</p>
     </div>
     <button nz-button nzType="primary" class="flex items-center gap-1.5" (click)="openCreateModal()">
-      <span nz-icon nzType="plus"></span>
+      <nz-icon nzType="plus"></nz-icon>
       Nueva Justificación
     </button>
   </div>
@@ -29,47 +29,48 @@
       </thead>
       <tbody>
         @for (item of justTable.data; track item.id) {
-          <tr>
-            <td class="font-mono font-medium">{{ item.date | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <div class="font-semibold text-gray-800 dark:text-gray-200">{{ item.employeeName }}</div>
-              <div class="text-xs text-gray-400">{{ item.employeeCode }}</div>
-            </td>
-            <td>{{ item.branchName }}</td>
-            <td>
-              <nz-tag [nzColor]="item.type === JustificationType.Tardiness ? 'warning' : 'purple'">
-                {{ getTypeLabel(item.type) }}
-              </nz-tag>
-            </td>
-            <td class="max-w-xs truncate" [title]="item.reason">{{ item.reason }}</td>
-            <td>
-              @switch (item.status) {
-                @case (JustificationStatus.Pending) {
-                  <nz-tag nzColor="processing">Pendiente</nz-tag>
-                }
-                @case (JustificationStatus.Approved) {
-                  <nz-tag nzColor="success">Aprobada</nz-tag>
-                }
-                @case (JustificationStatus.Rejected) {
-                  <nz-tag nzColor="error">Rechazada</nz-tag>
-                }
-              }
-            </td>
-            <td class="text-xs text-gray-400">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td>
-              @if (item.status === JustificationStatus.Pending) {
-                <button nz-button nzType="default" nzSize="small" class="flex items-center gap-1 text-indigo-600 border-indigo-200" (click)="openReviewModal(item)">
-                  <span nz-icon nzType="check-square"></span> Evaluar
-                </button>
-              } @else {
-                <span class="text-xs text-gray-400 font-medium">Procesado</span>
-              }
-            </td>
-          </tr>
+        <tr>
+          <td class="font-mono font-medium">{{ item.date | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <div class="font-semibold text-gray-800 dark:text-gray-200">{{ item.employeeName }}</div>
+            <div class="text-xs text-gray-400">{{ item.employeeCode }}</div>
+          </td>
+          <td>{{ item.branchName }}</td>
+          <td>
+            <nz-tag [nzColor]="item.type === JustificationType.Tardiness ? 'warning' : 'purple'">
+              {{ getTypeLabel(item.type) }}
+            </nz-tag>
+          </td>
+          <td class="max-w-xs truncate" [title]="item.reason">{{ item.reason }}</td>
+          <td>
+            @switch (item.status) {
+            @case (JustificationStatus.Pending) {
+            <nz-tag nzColor="processing">Pendiente</nz-tag>
+            }
+            @case (JustificationStatus.Approved) {
+            <nz-tag nzColor="success">Aprobada</nz-tag>
+            }
+            @case (JustificationStatus.Rejected) {
+            <nz-tag nzColor="error">Rechazada</nz-tag>
+            }
+            }
+          </td>
+          <td class="text-xs text-gray-400">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            @if (item.status === JustificationStatus.Pending) {
+            <button nz-button nzType="default" nzSize="small"
+              class="flex items-center gap-1 text-indigo-600 border-indigo-200" (click)="openReviewModal(item)">
+              <span nz-icon nzType="check-square"></span> Evaluar
+            </button>
+            } @else {
+            <span class="text-xs text-gray-400 font-medium">Procesado</span>
+            }
+          </td>
+        </tr>
         } @empty {
-          <tr>
-            <td colspan="8" class="text-center text-gray-400 py-8">No hay solicitudes de justificación registradas.</td>
-          </tr>
+        <tr>
+          <td colspan="8" class="text-center text-gray-400 py-8">No hay solicitudes de justificación registradas.</td>
+        </tr>
         }
       </tbody>
     </nz-table>
@@ -77,14 +78,8 @@
 </div>
 
 <!-- Modal Registrar Justificación -->
-<nz-modal
-  [(nzVisible)]="isCreateModalVisible"
-  nzTitle="Registrar Nueva Justificación"
-  (nzOnCancel)="closeCreateModal()"
-  (nzOnOk)="submitCreate()"
-  [nzOkLoading]="submitting()"
-  nzOkText="Guardar Solicitud"
->
+<nz-modal [(nzVisible)]="isCreateModalVisible" nzTitle="Registrar Nueva Justificación" (nzOnCancel)="closeCreateModal()"
+  (nzOnOk)="submitCreate()" [nzOkLoading]="submitting()" nzOkText="Guardar Solicitud">
   <ng-container *nzModalContent>
     <form nz-form [formGroup]="createForm" nzLayout="vertical">
       <nz-form-item>
@@ -92,7 +87,8 @@
         <nz-form-control nzErrorTip="Seleccione un empleado">
           <nz-select formControlName="employeeId" nzPlaceHolder="Buscar empleado..." nzShowSearch>
             @for (emp of employees(); track emp.id) {
-              <nz-option [nzValue]="emp.id" [nzLabel]="emp.lastName + ', ' + emp.firstName + ' (' + emp.code + ')'"></nz-option>
+            <nz-option [nzValue]="emp.id"
+              [nzLabel]="emp.lastName + ', ' + emp.firstName + ' (' + emp.code + ')'"></nz-option>
             }
           </nz-select>
         </nz-form-control>
@@ -121,7 +117,8 @@
       <nz-form-item>
         <nz-form-label nzRequired>Motivo / Explicación</nz-form-label>
         <nz-form-control nzErrorTip="Ingrese el motivo de la justificación">
-          <textarea nz-input formControlName="reason" rows="3" placeholder="Detalle la razón de la tardanza o ausencia..."></textarea>
+          <textarea nz-input formControlName="reason" rows="3"
+            placeholder="Detalle la razón de la tardanza o ausencia..."></textarea>
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -129,41 +126,37 @@
 </nz-modal>
 
 <!-- Modal Evaluar Justificación -->
-<nz-modal
-  [(nzVisible)]="isReviewModalVisible"
-  nzTitle="Evaluar Solicitud de Justificación"
-  (nzOnCancel)="closeReviewModal()"
-  (nzOnOk)="submitReview()"
-  [nzOkLoading]="submitting()"
-  nzOkText="Confirmar Evaluación"
->
+<nz-modal [(nzVisible)]="isReviewModalVisible" nzTitle="Evaluar Solicitud de Justificación"
+  (nzOnCancel)="closeReviewModal()" (nzOnOk)="submitReview()" [nzOkLoading]="submitting()"
+  nzOkText="Confirmar Evaluación">
   <ng-container *nzModalContent>
     @if (selectedJustification; as sj) {
-      <div class="bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg mb-4 space-y-2 text-sm">
-        <p><strong>Empleado:</strong> {{ sj.employeeName }} ({{ sj.employeeCode }})</p>
-        <p><strong>Fecha Incidencia:</strong> {{ sj.date | date:'dd/MM/yyyy' }}</p>
-        <p><strong>Tipo:</strong> {{ getTypeLabel(sj.type) }}</p>
-        <p><strong>Motivo:</strong> {{ sj.reason }}</p>
-      </div>
+    <div class="bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg mb-4 space-y-2 text-sm">
+      <p><strong>Empleado:</strong> {{ sj.employeeName }} ({{ sj.employeeCode }})</p>
+      <p><strong>Fecha Incidencia:</strong> {{ sj.date | date:'dd/MM/yyyy' }}</p>
+      <p><strong>Tipo:</strong> {{ getTypeLabel(sj.type) }}</p>
+      <p><strong>Motivo:</strong> {{ sj.reason }}</p>
+    </div>
 
-      <form nz-form [formGroup]="reviewForm" nzLayout="vertical">
-        <nz-form-item>
-          <nz-form-label nzRequired>Dictamen</nz-form-label>
-          <nz-form-control>
-            <nz-select formControlName="approve">
-              <nz-option [nzValue]="true" nzLabel="Aprobar Justificación"></nz-option>
-              <nz-option [nzValue]="false" nzLabel="Rechazar Justificación"></nz-option>
-            </nz-select>
-          </nz-form-control>
-        </nz-form-item>
+    <form nz-form [formGroup]="reviewForm" nzLayout="vertical">
+      <nz-form-item>
+        <nz-form-label nzRequired>Dictamen</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="approve">
+            <nz-option [nzValue]="true" nzLabel="Aprobar Justificación"></nz-option>
+            <nz-option [nzValue]="false" nzLabel="Rechazar Justificación"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-        <nz-form-item>
-          <nz-form-label>Observaciones de Evaluación</nz-form-label>
-          <nz-form-control>
-            <textarea nz-input formControlName="notes" rows="2" placeholder="Notas opcionales de RRHH o administración..."></textarea>
-          </nz-form-control>
-        </nz-form-item>
-      </form>
+      <nz-form-item>
+        <nz-form-label>Observaciones de Evaluación</nz-form-label>
+        <nz-form-control>
+          <textarea nz-input formControlName="notes" rows="2"
+            placeholder="Notas opcionales de RRHH o administración..."></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
     }
   </ng-container>
 </nz-modal>
