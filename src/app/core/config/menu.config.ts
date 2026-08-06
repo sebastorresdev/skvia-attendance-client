@@ -6,7 +6,7 @@ export const MENU: MenuGroup[] = [
     title: 'Dashboard',
     icon: 'dashboard',
     children: [
-      { label: 'Panel Principal', link: '/dashboard', permission: PERMISSIONS.Welcome.View },
+      { label: 'Panel Principal', link: '/dashboard' },
     ]
   },
   {
