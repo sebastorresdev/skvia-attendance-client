@@ -1,19 +1,25 @@
 <div class="p-6">
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
     <div>
       <h2 class="text-xl font-semibold dark:text-white">Reporte de Asistencias</h2>
-      <p class="text-gray-500">Consulta las marcaciones del personal.</p>
+      <p class="text-gray-500 text-sm">Consulta y exporta las marcaciones del personal con filtros avanzados.</p>
     </div>
-    <button nz-button nzType="dashed" (click)="seedData()" [nzLoading]="seeding()">
-      <span nz-icon nzType="database"></span>
-      Generar Datos (DEV)
-    </button>
+    <div class="flex items-center gap-2">
+      <button nz-button nzType="default" class="bg-emerald-600 hover:bg-emerald-700 text-white border-none flex items-center gap-1.5" (click)="exportExcel()" [nzLoading]="exporting()">
+        <span nz-icon nzType="file-excel" nzTheme="outline"></span>
+        Exportar Excel
+      </button>
+      <button nz-button nzType="dashed" (click)="seedData()" [nzLoading]="seeding()">
+        <span nz-icon nzType="database"></span>
+        Generar Datos (DEV)
+      </button>
+    </div>
   </div>
 
-  <nz-card>
-    <form nz-form [formGroup]="form" class="mb-4" (ngSubmit)="search()">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <nz-form-item class="mb-0">
+  <nz-card class="shadow-sm rounded-lg">
+    <form nz-form [formGroup]="form" class="mb-6" (ngSubmit)="search()">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <nz-form-item class="mb-0 col-span-1 sm:col-span-2 xl:col-span-2">
           <nz-form-control>
             <nz-range-picker formControlName="dateRange" class="w-full"></nz-range-picker>
           </nz-form-control>
@@ -31,12 +37,26 @@
 
         <nz-form-item class="mb-0">
           <nz-form-control>
-            <input nz-input formControlName="search" placeholder="Buscar empleado..." />
+            <nz-select formControlName="employeeId" nzPlaceHolder="Empleado..." nzShowSearch nzAllowClear class="w-full">
+              @for (emp of employees(); track emp.id) {
+                <nz-option [nzValue]="emp.id" [nzLabel]="emp.lastName + ', ' + emp.firstName + ' (' + emp.code + ')'"></nz-option>
+              }
+            </nz-select>
           </nz-form-control>
         </nz-form-item>
 
-        <div>
-          <button nz-button nzType="primary" type="submit" [nzLoading]="loading()">
+        <nz-form-item class="mb-0">
+          <nz-form-control>
+            <nz-select formControlName="statusFilter" class="w-full">
+              <nz-option nzValue="all" nzLabel="Todos los estados"></nz-option>
+              <nz-option nzValue="onTime" nzLabel="Puntuales"></nz-option>
+              <nz-option nzValue="late" nzLabel="Solo Tardanzas"></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <div class="flex gap-2">
+          <button nz-button nzType="primary" type="submit" [nzLoading]="loading()" class="flex-1 flex items-center justify-center gap-1">
             <span nz-icon nzType="search"></span> Buscar
           </button>
         </div>
