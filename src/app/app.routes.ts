@@ -31,9 +31,8 @@ export const routes: Routes = [
 
       {
         path: 'welcome',
-        canActivate: [permissionGuard(PERMISSIONS.Welcome.View)],
-        loadChildren: () =>
-          import('./features/welcome/welcome.routes').then(m => m.WELCOME_ROUTES),
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
       },
 
       {
