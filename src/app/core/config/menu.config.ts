@@ -6,7 +6,7 @@ export const MENU: MenuGroup[] = [
     title: 'Dashboard',
     icon: 'dashboard',
     children: [
-      { label: 'Welcome', link: '/welcome', permission: PERMISSIONS.Welcome.View },
+      { label: 'Panel Principal', link: '/dashboard', permission: PERMISSIONS.Welcome.View },
     ]
   },
   {
@@ -38,6 +38,8 @@ export const MENU: MenuGroup[] = [
       { label: 'Empleados', link: '/employees', permission: PERMISSIONS.Employees.View },
       { label: 'Turnos', link: '/schedules', permission: PERMISSIONS.Employees.View },
       { label: 'Reportes de Asistencia', link: '/attendance-report', permission: PERMISSIONS.Employees.View },
+      { label: 'Justificaciones', link: '/justifications', permission: PERMISSIONS.Employees.View },
+      { label: 'Pre-Nómina Mensual', link: '/monthly-summary', permission: PERMISSIONS.Employees.View },
     ]
   }
 ] as const;

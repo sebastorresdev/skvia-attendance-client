@@ -22,7 +22,12 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/layout').then(m => m.Layout),
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/pages/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
 
       {
         path: 'welcome',
@@ -83,6 +88,18 @@ export const routes: Routes = [
         path: 'attendance-report',
         canActivate: [permissionGuard(PERMISSIONS.Employees.View)], // Reusing Employees.View for now
         loadComponent: () => import('./features/attendance-report/pages/attendance-report/attendance-report.component').then(m => m.AttendanceReportComponent)
+      },
+
+      {
+        path: 'justifications',
+        canActivate: [permissionGuard(PERMISSIONS.Employees.View)],
+        loadComponent: () => import('./features/justifications/pages/justification-list/justification-list.component').then(m => m.JustificationListComponent)
+      },
+
+      {
+        path: 'monthly-summary',
+        canActivate: [permissionGuard(PERMISSIONS.Employees.View)],
+        loadComponent: () => import('./features/attendance-report/pages/monthly-summary/monthly-summary.component').then(m => m.MonthlySummaryComponent)
       },
 
       {

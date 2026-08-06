@@ -96,6 +96,25 @@ export class KioskPage implements OnInit, OnDestroy {
     this._router.navigate(['/']);
   }
 
+  appendDigit(digit: string) {
+    if (this.identifier.length < 12) {
+      this.identifier += digit;
+      this._cdr.markForCheck();
+    }
+  }
+
+  deleteDigit() {
+    if (this.identifier.length > 0) {
+      this.identifier = this.identifier.slice(0, -1);
+      this._cdr.markForCheck();
+    }
+  }
+
+  clearDigit() {
+    this.identifier = '';
+    this._cdr.markForCheck();
+  }
+
   goToAdminLink() {
     // Generate a callback URL to return here
     const callbackUrl = encodeURIComponent(window.location.origin + '/kiosk');

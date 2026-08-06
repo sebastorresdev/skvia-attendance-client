@@ -1,0 +1,107 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+        <span nz-icon nzType="table" class="text-indigo-600"></span>
+        Consolidado Mensual / Pre-Nómina
+      </h2>
+      <p class="text-gray-500 text-sm">Resumen acumulado por empleado de asistencias, tardanzas, faltas y justificaciones.</p>
+    </div>
+  </div>
+
+  <nz-card class="shadow-sm rounded-xl mb-6">
+    <form nz-form [formGroup]="form" (ngSubmit)="search()" class="flex flex-wrap items-center gap-4">
+      <nz-form-item class="mb-0">
+        <nz-form-control>
+          <nz-select formControlName="year" class="w-32">
+            @for (y of years; track y) {
+              <nz-option [nzValue]="y" [nzLabel]="y.toString()"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-control>
+          <nz-select formControlName="month" class="w-40">
+            @for (m of months; track m.value) {
+              <nz-option [nzValue]="m.value" [nzLabel]="m.label"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0">
+        <nz-form-control>
+          <nz-select formControlName="branchId" nzPlaceHolder="Todas las sedes" nzAllowClear class="w-48">
+            @for (b of branches(); track b.id) {
+              <nz-option [nzValue]="b.id" [nzLabel]="b.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <button nz-button nzType="primary" type="submit" [nzLoading]="loading()" class="flex items-center gap-1">
+        <span nz-icon nzType="search"></span> Consultar Pre-Nómina
+      </button>
+    </form>
+  </nz-card>
+
+  @if (summary(); as sum) {
+    <nz-card class="shadow-sm rounded-xl">
+      <div class="mb-4 text-sm text-gray-500 font-medium">
+        Mostrando {{ sum.totalEmployees }} empleado(s) procesados para {{ getMonthLabel(sum.month) }} {{ sum.year }}.
+      </div>
+
+      <nz-table #sumTable [nzData]="sum.items" [nzLoading]="loading()" [nzPageSize]="15" nzSize="middle" class="overflow-x-auto">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Sede</th>
+            <th>Programados</th>
+            <th>Trabajados</th>
+            <th>Descansos</th>
+            <th>Vacaciones/Lic.</th>
+            <th>Faltas Injust.</th>
+            <th>Faltas Just.</th>
+            <th>Tardanza (Min)</th>
+            <th>Tardanza Just. (Min)</th>
+            <th>H. Extras (Min)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of sumTable.data; track item.employeeId) {
+            <tr>
+              <td>
+                <div class="font-semibold text-gray-800 dark:text-gray-200">{{ item.employeeName }}</div>
+                <div class="text-xs text-gray-400">{{ item.employeeCode }}</div>
+              </td>
+              <td>{{ item.branchName }}</td>
+              <td class="text-center font-semibold">{{ item.totalWorkDaysScheduled }}</td>
+              <td class="text-center text-emerald-600 font-bold">{{ item.daysWorked }}</td>
+              <td class="text-center text-gray-500">{{ item.daysOff }}</td>
+              <td class="text-center text-blue-600 font-medium">{{ item.vacationDays + item.medicalLeaveDays }}</td>
+              <td class="text-center font-bold" [class.text-red-500]="item.unjustifiedAbsences > 0">
+                {{ item.unjustifiedAbsences }}
+              </td>
+              <td class="text-center text-amber-600 font-medium">{{ item.justifiedAbsences }}</td>
+              <td class="text-right font-mono" [class.text-red-500]="item.totalLateMinutes > 0">
+                {{ item.totalLateMinutes }} m
+              </td>
+              <td class="text-right font-mono text-emerald-600 font-medium">
+                {{ item.justifiedLateMinutes }} m
+              </td>
+              <td class="text-right font-mono text-indigo-600 font-medium">
+                {{ item.totalOvertimeMinutes }} m
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="11" class="text-center text-gray-400 py-8">No hay registros acumulados para el periodo seleccionado.</td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-card>
+  }
+</div>

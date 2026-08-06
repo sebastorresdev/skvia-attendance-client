@@ -19,6 +19,30 @@ export interface AttendanceResponse {
   isLate: boolean;
 }
 
+export interface EmployeeMonthlySummaryItem {
+  employeeId: string;
+  employeeCode: string;
+  employeeName: string;
+  branchName: string;
+  totalWorkDaysScheduled: number;
+  daysWorked: number;
+  daysOff: number;
+  vacationDays: number;
+  medicalLeaveDays: number;
+  unjustifiedAbsences: number;
+  justifiedAbsences: number;
+  totalLateMinutes: number;
+  justifiedLateMinutes: number;
+  totalOvertimeMinutes: number;
+}
+
+export interface MonthlySummaryResponse {
+  year: number;
+  month: number;
+  totalEmployees: number;
+  items: EmployeeMonthlySummaryItem[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -52,6 +76,18 @@ export class AttendanceService {
     }
 
     return this._http.get<AttendanceResponse[]>(this._apiUrl, { params });
+  }
+
+  getMonthlySummary(year: number, month: number, branchId?: string): Observable<MonthlySummaryResponse> {
+    let params = new HttpParams()
+      .set('year', year.toString())
+      .set('month', month.toString());
+
+    if (branchId) {
+      params = params.set('branchId', branchId);
+    }
+
+    return this._http.get<MonthlySummaryResponse>(`${this._apiUrl}/monthly-summary`, { params });
   }
 
   exportExcel(
