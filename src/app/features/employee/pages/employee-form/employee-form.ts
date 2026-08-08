@@ -118,7 +118,8 @@ export class EmployeeForm implements OnInit {
       photoUrl: ['', [Validators.maxLength(500)]],
       mainBranchId: [null],
       mobileCheckInEnabled: [false],
-      applicationUserId: [null]
+      applicationUserId: [null],
+      requireFourPointAttendance: [null]
     });
   }
 
@@ -141,7 +142,8 @@ export class EmployeeForm implements OnInit {
           photoUrl: emp.photoUrl,
           mainBranchId: emp.mainBranchId || null,
           mobileCheckInEnabled: (emp as any).mobileCheckInEnabled || false,
-          applicationUserId: (emp as any).applicationUserId || null
+          applicationUserId: (emp as any).applicationUserId || null,
+          requireFourPointAttendance: emp.requireFourPointAttendance
         });
         this.initialLoading.set(false);
       },
@@ -185,7 +187,8 @@ export class EmployeeForm implements OnInit {
       photoUrl: val.photoUrl ? val.photoUrl.trim() : null,
       mainBranchId: val.mainBranchId || null,
       mobileCheckInEnabled: val.mobileCheckInEnabled,
-      applicationUserId: val.applicationUserId || null
+      applicationUserId: val.applicationUserId || null,
+      requireFourPointAttendance: val.requireFourPointAttendance === 'null' ? null : val.requireFourPointAttendance
     };
 
     const obs$ = this.isEdit 

@@ -124,4 +124,8 @@ export class AttendanceService {
   seedData(): Observable<any> {
     return this._http.post(`${this._apiUrl}/seed`, {});
   }
+
+  recalculateAttendance(id: string): Observable<void> {
+    return this._http.put<void>(`${this._apiUrl}/${id}/recalculate`, {});
+  }
 }

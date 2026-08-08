@@ -152,6 +152,18 @@
           <p class="text-xs text-gray-400 mt-1">Requerido si se habilita la marcación móvil.</p>
         </nz-form-control>
       </nz-form-item>
+
+      <nz-form-item class="mb-0 mt-2">
+        <nz-form-label>Política de Refrigerio (4 Puntos)</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="requireFourPointAttendance">
+            <nz-option [nzValue]="null" nzLabel="Heredar de la Sede"></nz-option>
+            <nz-option [nzValue]="true" nzLabel="Exigir (4 Puntos)"></nz-option>
+            <nz-option [nzValue]="false" nzLabel="No exigir (2 Puntos)"></nz-option>
+          </nz-select>
+          <p class="text-xs text-gray-400 mt-1">Sobrescribe la configuración de la Sede si se especifica.</p>
+        </nz-form-control>
+      </nz-form-item>
     </div>
   </nz-card>
 </form>

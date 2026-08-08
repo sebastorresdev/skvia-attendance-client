@@ -14,7 +14,7 @@
     <form nz-form [formGroup]="form" (ngSubmit)="search()" class="flex flex-wrap items-start gap-4">
       <nz-form-item class="mb-0">
         <nz-form-control>
-          <nz-select formControlName="year" class="w-32">
+          <nz-select formControlName="year" class="min-w-[120px]">
             @for (y of years; track y) {
             <nz-option [nzValue]="y" [nzLabel]="y.toString()"></nz-option>
             }
@@ -24,7 +24,7 @@
 
       <nz-form-item class="mb-0">
         <nz-form-control>
-          <nz-select formControlName="month" class="w-40">
+          <nz-select formControlName="month" class="min-w-[150px]">
             @for (m of months; track m.value) {
             <nz-option [nzValue]="m.value" [nzLabel]="m.label"></nz-option>
             }
@@ -34,7 +34,7 @@
 
       <nz-form-item class="mb-0">
         <nz-form-control>
-          <nz-select formControlName="branchId" nzPlaceHolder="Todas las sedes" nzAllowClear class="w-48">
+          <nz-select formControlName="branchId" nzPlaceHolder="Todas las sedes" nzAllowClear class="min-w-[300px]">
             @for (b of branches(); track b.id) {
             <nz-option [nzValue]="b.id" [nzLabel]="b.name"></nz-option>
             }

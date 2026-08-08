@@ -17,6 +17,7 @@ export interface EmployeeResponse {
   status: EmployeeStatus;
   mobileCheckInEnabled: boolean;
   applicationUserId?: string;
+  requireFourPointAttendance?: boolean | null;
 }
 
 export enum EmployeeStatus {

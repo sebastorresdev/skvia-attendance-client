@@ -5,6 +5,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { CommonModule } from '@angular/common';
 
 import { BranchResponse } from '../../models/branch-response';
@@ -21,7 +23,9 @@ import { Observable } from 'rxjs';
     NzFormModule,
     NzInputModule,
     NzButtonModule,
-    NzModalModule
+    NzModalModule,
+    NzSwitchModule,
+    NzDividerModule
   ],
   templateUrl: './branch-form-modal.html'
 })
@@ -46,7 +50,12 @@ export class BranchFormModal implements OnInit {
       code: [this.branch?.code || '', [Validators.required, Validators.maxLength(10)]],
       name: [this.branch?.name || '', [Validators.required, Validators.maxLength(100)]],
       address: [this.branch?.address || '', [Validators.maxLength(250)]],
-      tardinessToleranceMinutes: [this.branch?.tardinessToleranceMinutes || 0, [Validators.min(0)]]
+      tardinessToleranceMinutes: [this.branch?.tardinessToleranceMinutes || 0, [Validators.min(0)]],
+      latitude: [this.branch?.latitude || null],
+      longitude: [this.branch?.longitude || null],
+      geofenceRadiusMeters: [this.branch?.geofenceRadiusMeters || null, [Validators.min(1)]],
+      requireFourPointAttendance: [this.branch?.requireFourPointAttendance ?? true],
+      requirePhotoForMobile: [this.branch?.requirePhotoForMobile ?? false]
     });
   }
 
@@ -63,7 +72,12 @@ export class BranchFormModal implements OnInit {
         code: val.code.trim().toUpperCase(),
         name: val.name.trim(),
         address: val.address ? val.address.trim() : null,
-        tardinessToleranceMinutes: val.tardinessToleranceMinutes || 0
+        tardinessToleranceMinutes: val.tardinessToleranceMinutes || 0,
+        latitude: val.latitude,
+        longitude: val.longitude,
+        geofenceRadiusMeters: val.geofenceRadiusMeters,
+        requireFourPointAttendance: !!val.requireFourPointAttendance,
+        requirePhotoForMobile: !!val.requirePhotoForMobile
       };
 
       const obs$ = (this.isEdit 

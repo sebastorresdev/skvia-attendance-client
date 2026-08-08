@@ -27,6 +27,45 @@
     </nz-form-control>
   </nz-form-item>
 
+  <nz-divider nzText="Configuración de Asistencia Móvil y GPS" nzOrientation="left" class="my-4!"></nz-divider>
+
+  <nz-form-item>
+    <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="latitude">Latitud</nz-form-label>
+    <nz-form-control [nzSm]="18" [nzXs]="24">
+      <input nz-input type="number" step="any" id="latitude" formControlName="latitude" placeholder="Ej: -12.04318" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="longitude">Longitud</nz-form-label>
+    <nz-form-control [nzSm]="18" [nzXs]="24">
+      <input nz-input type="number" step="any" id="longitude" formControlName="longitude" placeholder="Ej: -77.02824" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="geofenceRadiusMeters">Radio (Metros)</nz-form-label>
+    <nz-form-control [nzSm]="18" [nzXs]="24">
+      <input nz-input type="number" id="geofenceRadiusMeters" formControlName="geofenceRadiusMeters" placeholder="Radio de la geocerca (Ej: 50)" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSm]="6" [nzXs]="24">Política 4 Puntos</nz-form-label>
+    <nz-form-control [nzSm]="18" [nzXs]="24">
+      <nz-switch formControlName="requireFourPointAttendance"></nz-switch>
+      <span class="ml-2 text-xs text-gray-500">Exigir Entrada, 2 Refrigerios y Salida.</span>
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label [nzSm]="6" [nzXs]="24">Foto Obligatoria</nz-form-label>
+    <nz-form-control [nzSm]="18" [nzXs]="24">
+      <nz-switch formControlName="requirePhotoForMobile"></nz-switch>
+      <span class="ml-2 text-xs text-gray-500">Solo en marcación desde App Android.</span>
+    </nz-form-control>
+  </nz-form-item>
+
   <div *nzModalFooter>
     <button nz-button nzType="default" (click)="destroyModal()" type="button">Cancelar</button>
     <button nz-button nzType="primary" [nzLoading]="loading()" (click)="submitForm()">Guardar</button>

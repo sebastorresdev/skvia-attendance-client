@@ -13,4 +13,5 @@ export interface CreateEmployeeRequest {
   department?: string;
   photoUrl?: string;
   mainBranchId?: string;
+  requireFourPointAttendance?: boolean | null;
 }

@@ -78,6 +78,7 @@
           <th>Entrada</th>
           <th>Salida</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -116,6 +117,12 @@
             } @else {
             <nz-tag nzColor="success">Puntual</nz-tag>
             }
+          </td>
+          <td>
+            <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Recalcular Asistencia" 
+                    (click)="recalculateAttendance(data.id)">
+              <nz-icon nzType="reload" nzTheme="outline" class="text-blue-500"></nz-icon>
+            </button>
           </td>
         </tr>
         }

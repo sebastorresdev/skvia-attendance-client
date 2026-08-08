@@ -170,6 +170,18 @@ export class AttendanceReportComponent implements OnInit {
     });
   }
 
+  recalculateAttendance(id: string): void {
+    this._attendanceService.recalculateAttendance(id).subscribe({
+      next: () => {
+        this._messageService.success('Asistencia recalculada exitosamente');
+        this.search();
+      },
+      error: () => {
+        this._messageService.error('Error al recalcular la asistencia');
+      }
+    });
+  }
+
   private formatDate(date: Date): string {
     const d = new Date(date);
     let month = '' + (d.getMonth() + 1);
