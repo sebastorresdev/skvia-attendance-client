@@ -9,6 +9,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzGridModule } from 'ng-zorro-antd/grid';
@@ -25,6 +26,7 @@ import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
 import { EmployeeResponse } from '../../models/employee-response';
 import { BranchResponse } from '../../../branch/models/branch-response';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { UserService } from '../../../user/services/user-service';
 import { UserResponse } from '../../../user/models/user-response';
 
@@ -47,6 +49,8 @@ import { UserResponse } from '../../../user/models/user-response';
     NzBreadCrumbModule,
     NzDividerModule,
     NzSwitchModule,
+    NzCheckboxModule,
+    NzTimePickerModule,
     RouterLink
   ],
   templateUrl: './employee-form.html'

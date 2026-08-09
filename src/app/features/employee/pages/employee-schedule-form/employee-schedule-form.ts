@@ -16,6 +16,8 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { startOfWeek, endOfWeek, addDays, format, parseISO, isSameDay, addWeeks, startOfMonth, endOfMonth, addMonths, differenceInDays } from 'date-fns';
 
 // PROYECTO
@@ -45,7 +47,9 @@ import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
     NzIconModule,
     NzSpinModule,
     NzBreadCrumbModule,
-    NzSegmentedModule
+    NzSegmentedModule,
+    NzModalModule,
+    NzCheckboxModule
   ],
   templateUrl: './employee-schedule-form.html',
   providers: [DatePipe]
@@ -67,7 +71,7 @@ export class EmployeeScheduleForm implements OnInit {
   loadingData = signal(true);
   saving = signal(false);
 
-  viewMode: 'week' | 'month' = 'week';
+  viewMode: 'week' | 'month' = 'month';
   viewModeOptions = [
     { label: 'Semanal', value: 'week', icon: 'bars' },
     { label: 'Mensual', value: 'month', icon: 'calendar' }
@@ -120,10 +124,13 @@ export class EmployeeScheduleForm implements OnInit {
     });
   }
 
-  onViewModeChange(value: any): void {
-    this.viewMode = value;
+  onViewModeChange(mode: 'week' | 'month'): void {
+    this.viewMode = mode;
     this.loadScheduleForCurrentPeriod();
   }
+
+  serverSchedulesCache: any[] = [];
+  unsavedDraftsMap: Map<string, any> = new Map();
 
   loadScheduleForCurrentPeriod(): void {
     this.loadingData.set(true);
@@ -141,6 +148,7 @@ export class EmployeeScheduleForm implements OnInit {
 
     this._employeeService.getSchedule(this.employeeId, startStr, endStr).subscribe({
       next: (schedules) => {
+        this.serverSchedulesCache = schedules;
         this.buildFormForPeriod(schedules);
         this.loadingData.set(false);
       },
@@ -157,46 +165,54 @@ export class EmployeeScheduleForm implements OnInit {
     const start = this.viewMode === 'week' ? this.currentWeekStart() : this.currentMonthStart();
     const end = this.viewMode === 'week' ? this.currentWeekEnd() : this.currentMonthEnd();
     
-    // Calculate difference in days safely
     const diffDays = Math.abs(differenceInDays(end, start)) + 1;
 
     for (let i = 0; i < diffDays; i++) {
       const date = addDays(start, i);
       const dateStr = format(date, 'yyyy-MM-dd');
       
+      const draft = this.unsavedDraftsMap.get(dateStr);
       const existing = existingSchedules.find(s => s.date.startsWith(dateStr));
+
+      let dayType = draft ? draft.dayType : (existing?.dayType ?? null);
+      let branchId = draft ? draft.branchId : (existing?.branchId?.toLowerCase() ?? (this.currentEmployee?.mainBranchId?.toLowerCase() || null));
+      let baseScheduleId = draft ? draft.baseScheduleId : (existing?.baseScheduleId ?? null);
 
       let startTimeDate: Date | null = null;
       let endTimeDate: Date | null = null;
 
-      if (existing?.assignedStartTime) {
-        // Parse HH:mm:ss to Date for nz-time-picker
-        const [h, m, s] = existing.assignedStartTime.split(':');
-        startTimeDate = new Date(date);
-        startTimeDate.setHours(+h, +m, +s || 0);
-      }
+      if (draft) {
+        startTimeDate = draft.startTime;
+        endTimeDate = draft.endTime;
+      } else {
+        if (existing?.assignedStartTime) {
+          const [h, m, s] = existing.assignedStartTime.split(':');
+          startTimeDate = new Date(date);
+          startTimeDate.setHours(+h, +m, +s || 0);
+        }
 
-      if (existing?.assignedEndTime) {
-        const [h, m, s] = existing.assignedEndTime.split(':');
-        endTimeDate = new Date(date);
-        endTimeDate.setHours(+h, +m, +s || 0);
-      }
-
-      let defaultBranchId = null;
-      if (existing && existing.branchId) {
-        defaultBranchId = existing.branchId.toLowerCase();
-      } else if (this.currentEmployee?.mainBranchId) {
-        defaultBranchId = this.currentEmployee.mainBranchId.toLowerCase();
+        if (existing?.assignedEndTime) {
+          const [h, m, s] = existing.assignedEndTime.split(':');
+          endTimeDate = new Date(date);
+          endTimeDate.setHours(+h, +m, +s || 0);
+        }
       }
 
       const dayGroup = this._fb.group({
         date: [dateStr],
-        dayType: [existing?.dayType ?? null],
-        branchId: [defaultBranchId],
-        baseScheduleId: [existing?.baseScheduleId ?? null],
+        dayType: [dayType],
+        branchId: [branchId],
+        baseScheduleId: [baseScheduleId],
         startTime: [startTimeDate],
         endTime: [endTimeDate],
-        isSaved: [!!existing]
+        isSaved: [!draft && !!existing]
+      });
+
+      // Track manual changes in memory
+      dayGroup.valueChanges.subscribe(val => {
+        if (val.date) {
+          this.unsavedDraftsMap.set(val.date, val);
+        }
       });
 
       // Update validation based on dayType
@@ -257,6 +273,7 @@ export class EmployeeScheduleForm implements OnInit {
   }
 
   onPeriodChange(date: Date): void {
+    this.selectedDate = date;
     if (this.viewMode === 'week') {
       this.currentWeekStart.set(startOfWeek(date, { weekStartsOn: 1 }));
       this.currentWeekEnd.set(endOfWeek(date, { weekStartsOn: 1 }));
@@ -267,18 +284,29 @@ export class EmployeeScheduleForm implements OnInit {
     this.loadScheduleForCurrentPeriod();
   }
 
-  changePeriod(offset: number): void {
+  changePeriod(delta: number): void {
     if (this.viewMode === 'week') {
-      this.selectedDate = addWeeks(this.selectedDate, offset);
+      this.selectedDate = addWeeks(this.selectedDate, delta);
+      this.currentWeekStart.set(startOfWeek(this.selectedDate, { weekStartsOn: 1 }));
+      this.currentWeekEnd.set(endOfWeek(this.selectedDate, { weekStartsOn: 1 }));
     } else {
-      this.selectedDate = addMonths(this.selectedDate, offset);
+      this.selectedDate = addMonths(this.selectedDate, delta);
+      this.currentMonthStart.set(startOfMonth(this.selectedDate));
+      this.currentMonthEnd.set(endOfMonth(this.selectedDate));
     }
-    this.onPeriodChange(this.selectedDate);
+    this.loadScheduleForCurrentPeriod();
   }
 
   goToToday(): void {
     this.selectedDate = new Date();
-    this.onPeriodChange(this.selectedDate);
+    if (this.viewMode === 'week') {
+      this.currentWeekStart.set(startOfWeek(this.selectedDate, { weekStartsOn: 1 }));
+      this.currentWeekEnd.set(endOfWeek(this.selectedDate, { weekStartsOn: 1 }));
+    } else {
+      this.currentMonthStart.set(startOfMonth(this.selectedDate));
+      this.currentMonthEnd.set(endOfMonth(this.selectedDate));
+    }
+    this.loadScheduleForCurrentPeriod();
   }
 
   onBaseScheduleChange(index: number, scheduleId: string | null): void {
@@ -330,34 +358,73 @@ export class EmployeeScheduleForm implements OnInit {
 
     this.saving.set(true);
 
-    let startStr: string;
-    let endStr: string;
-    if (this.viewMode === 'week') {
-      startStr = format(this.currentWeekStart(), 'yyyy-MM-dd');
-      endStr = format(this.currentWeekEnd(), 'yyyy-MM-dd');
-    } else {
-      startStr = format(this.currentMonthStart(), 'yyyy-MM-dd');
-      endStr = format(this.currentMonthEnd(), 'yyyy-MM-dd');
+    const allDaysMap = new Map<string, any>();
+
+    // 1. Gather entries from unsavedDraftsMap
+    this.unsavedDraftsMap.forEach((draft, dateStr) => {
+      if (draft.dayType !== null) {
+        allDaysMap.set(dateStr, draft);
+      }
+    });
+
+    // 2. Override/Add with current form controls
+    const formValues = this.form.getRawValue().days;
+    formValues.forEach((val: any) => {
+      if (val.dayType !== null && val.date) {
+        allDaysMap.set(val.date, val);
+      }
+    });
+
+    if (allDaysMap.size === 0) {
+      this._messageService.warning('No hay días configurados para guardar.');
+      this.saving.set(false);
+      return;
     }
 
-    const formValues = this.form.getRawValue().days;
-    
-    const request: AssignWeeklyScheduleRequest = {
-      startDate: startStr,
-      endDate: endStr,
-      days: formValues.filter((val: any) => val.dayType !== null).map((val: any) => ({
+    const sortedDates = Array.from(allDaysMap.keys()).sort();
+    const startDateStr = sortedDates[0];
+    const endDateStr = sortedDates[sortedDates.length - 1];
+
+    const daysPayload = Array.from(allDaysMap.values()).map((val: any) => {
+      let startStr: string | null = null;
+      let endStr: string | null = null;
+
+      if (val.startTime) {
+        if (typeof val.startTime === 'string') {
+          startStr = val.startTime;
+        } else if (val.startTime instanceof Date) {
+          startStr = format(val.startTime, 'HH:mm:ss');
+        }
+      }
+
+      if (val.endTime) {
+        if (typeof val.endTime === 'string') {
+          endStr = val.endTime;
+        } else if (val.endTime instanceof Date) {
+          endStr = format(val.endTime, 'HH:mm:ss');
+        }
+      }
+
+      return {
         date: val.date,
         branchId: val.branchId || this.currentEmployee?.mainBranchId || '00000000-0000-0000-0000-000000000000',
         dayType: val.dayType,
-        baseScheduleId: val.baseScheduleId,
-        startTime: val.startTime ? format(val.startTime, 'HH:mm:ss') : null,
-        endTime: val.endTime ? format(val.endTime, 'HH:mm:ss') : null
-      }))
+        baseScheduleId: val.baseScheduleId || null,
+        startTime: startStr,
+        endTime: endStr
+      };
+    });
+
+    const request: AssignWeeklyScheduleRequest = {
+      startDate: startDateStr,
+      endDate: endDateStr,
+      days: daysPayload
     };
 
     this._employeeService.assignWeeklySchedule(this.employeeId, request).subscribe({
       next: () => {
-        this._messageService.success('Horario semanal guardado correctamente.');
+        this._messageService.success('Horario guardado correctamente en la base de datos.');
+        this.unsavedDraftsMap.clear();
         this.saving.set(false);
         this.loadScheduleForCurrentPeriod();
       },
@@ -367,5 +434,219 @@ export class EmployeeScheduleForm implements OnInit {
         this.saving.set(false);
       }
     });
+  }
+
+  generateFromPattern(months: number = 2): void {
+    const start = new Date();
+    const end = addMonths(start, months);
+    const startDateStr = format(start, 'yyyy-MM-dd');
+    const endDateStr = format(end, 'yyyy-MM-dd');
+
+    this.saving.set(true);
+    this._employeeService.generateSchedules(this.employeeId, startDateStr, endDateStr).subscribe({
+      next: () => {
+        this._messageService.success(`Horarios generados correctamente desde la plantilla para los próximos ${months} meses`);
+        this.loadScheduleForCurrentPeriod();
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this._messageService.error('Error al generar horarios. Verifique que el empleado tenga configurada la plantilla semanal.');
+        this.saving.set(false);
+      }
+    });
+  }
+
+  // --- MODAL DE ASIGNACIÓN RÁPIDA POR PATRÓN Y RANGO ---
+  patternModalVisible = signal(false);
+  patternForm!: FormGroup;
+
+  get patternFormArray() {
+    return this.patternForm?.get('patterns') as FormArray;
+  }
+
+  openPatternModal(): void {
+    const today = new Date();
+    const threeMonthsLater = addMonths(today, 3);
+
+    this.patternForm = this._fb.group({
+      dateRange: [[today, threeMonthsLater], [Validators.required]],
+      patterns: this._fb.array(this.createDefaultPatternControls())
+    });
+
+    this.patternModalVisible.set(true);
+  }
+
+  closePatternModal(): void {
+    this.patternModalVisible.set(false);
+  }
+
+  private createDefaultPatternControls(): FormGroup[] {
+    const days = [1, 2, 3, 4, 5, 6, 0]; // Lunes a Domingo
+    const existing = this.currentEmployee?.schedulePatterns || [];
+
+    return days.map(d => {
+      const match = existing.find(p => p.dayOfWeek === d);
+      const isWorkDay = match ? match.isWorkDay : d !== 0;
+      const startTime = match?.startTime ? new Date(`1970-01-01T${match.startTime}`) : (d !== 0 ? new Date(0,0,0,8,0,0) : null);
+      const endTime = match?.endTime ? new Date(`1970-01-01T${match.endTime}`) : (d !== 0 ? new Date(0,0,0,18,0,0) : null);
+
+      const group = this._fb.group({
+        dayOfWeek: [d],
+        isWorkDay: [isWorkDay],
+        baseScheduleId: [null],
+        startTime: [startTime],
+        endTime: [endTime]
+      });
+
+      group.get('baseScheduleId')?.valueChanges.subscribe(schId => {
+        if (!schId) return;
+        const sch = this.schedules.find(s => s.id === schId);
+        if (sch) {
+          const [h1, m1, s1] = sch.defaultStartTime.split(':');
+          const startD = new Date(0,0,0, +h1, +m1, +s1 || 0);
+          const [h2, m2, s2] = sch.defaultEndTime.split(':');
+          const endD = new Date(0,0,0, +h2, +m2, +s2 || 0);
+          group.patchValue({
+            startTime: startD,
+            endTime: endD
+          });
+        }
+      });
+
+      return group;
+    });
+  }
+
+  getPatternDayName(dayIndex: number): string {
+    const names = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return names[dayIndex];
+  }
+
+  copyMondayToAll(): void {
+    if (!this.patternFormArray || this.patternFormArray.length === 0) return;
+    const mondayCtrl = this.patternFormArray.at(0);
+    if (!mondayCtrl) return;
+
+    const { isWorkDay, baseScheduleId, startTime, endTime } = mondayCtrl.value;
+
+    for (let i = 1; i < 5; i++) { // Martes a Viernes (indices 1 a 4)
+      this.patternFormArray.at(i).patchValue({
+        isWorkDay,
+        baseScheduleId,
+        startTime,
+        endTime
+      });
+    }
+  }
+
+  // --- MODAL DE EDICIÓN DE DÍA INDIVIDUAL ---
+  dayEditModalVisible = signal(false);
+  editingDayGroup: FormGroup | null = null;
+
+  openDayEditModal(dayGroup: any): void {
+    this.editingDayGroup = dayGroup as FormGroup;
+    this.dayEditModalVisible.set(true);
+  }
+
+  closeDayEditModal(): void {
+    this.dayEditModalVisible.set(false);
+    this.editingDayGroup = null;
+  }
+
+  getBranchName(branchId: string | null): string {
+    if (!branchId) return '';
+    const branch = this.branches.find(b => b.id.toLowerCase() === branchId.toLowerCase());
+    return branch ? branch.name : '';
+  }
+
+  getScheduleName(scheduleId: string | null): string {
+    if (!scheduleId) return '';
+    const sch = this.schedules.find(s => s.id === scheduleId);
+    return sch ? sch.name : '';
+  }
+
+  applyPatternToRange(): void {
+    if (!this.patternForm || this.patternForm.invalid) {
+      this._messageService.warning('Seleccione un rango de fechas válido.');
+      return;
+    }
+
+    const val = this.patternForm.value;
+    const [start, end] = val.dateRange as [Date, Date];
+    const patterns = val.patterns as any[];
+
+    const patternMap = new Map<number, any>();
+    patterns.forEach(p => patternMap.set(p.dayOfWeek, p));
+
+    const startDateStr = format(start, 'yyyy-MM-dd');
+    const endDateStr = format(end, 'yyyy-MM-dd');
+
+    const defaultBranchId = this.currentEmployee?.mainBranchId ? this.currentEmployee.mainBranchId.toLowerCase() : null;
+    let totalDaysApplied = 0;
+
+    for (let cur = new Date(start); cur <= end; cur = addDays(cur, 1)) {
+      const dateStr = format(cur, 'yyyy-MM-dd');
+
+      // Strict string date bounds comparison to avoid timezone leakage!
+      if (dateStr < startDateStr || dateStr > endDateStr) {
+        continue;
+      }
+
+      const dayOfWeek = cur.getDay();
+      const p = patternMap.get(dayOfWeek);
+
+      if (p) {
+        if (p.isWorkDay) {
+          let startD: Date | null = null;
+          let endD: Date | null = null;
+
+          if (p.startTime && p.endTime) {
+            const h1 = p.startTime.getHours();
+            const m1 = p.startTime.getMinutes();
+            startD = new Date(cur);
+            startD.setHours(h1, m1, 0, 0);
+
+            const h2 = p.endTime.getHours();
+            const m2 = p.endTime.getMinutes();
+            endD = new Date(cur);
+            endD.setHours(h2, m2, 0, 0);
+          }
+
+          this.unsavedDraftsMap.set(dateStr, {
+            date: dateStr,
+            dayType: ScheduleDayType.WorkDay,
+            branchId: defaultBranchId,
+            baseScheduleId: p.baseScheduleId || null,
+            startTime: startD,
+            endTime: endD,
+            isDraft: true
+          });
+        } else {
+          this.unsavedDraftsMap.set(dateStr, {
+            date: dateStr,
+            dayType: ScheduleDayType.DayOff,
+            branchId: null,
+            baseScheduleId: null,
+            startTime: null,
+            endTime: null,
+            isDraft: true
+          });
+        }
+        totalDaysApplied++;
+      }
+    }
+
+    // Re-render current period form so it picks up the drafts from unsavedDraftsMap
+    this.buildFormForPeriod(this.serverSchedulesCache || []);
+
+    this._messageService.success(`Se completó el horario para ${totalDaysApplied} día(s). Haz clic en "Guardar Horario" para confirmar.`);
+    this.patternModalVisible.set(false);
+  }
+
+  private formatTime(date: Date): string {
+    const h = date.getHours().toString().padStart(2, '0');
+    const m = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
   }
 }

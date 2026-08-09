@@ -18,4 +18,8 @@ export class DashboardService {
     }
     return this._http.get<DashboardStatsResponse>(`${this._apiUrl}/stats`, { params });
   }
+
+  getScheduleAlerts(): Observable<import('../models/schedule-alert').ScheduleAlert[]> {
+    return this._http.get<import('../models/schedule-alert').ScheduleAlert[]>(`${this._apiUrl}/schedule-alerts`);
+  }
 }

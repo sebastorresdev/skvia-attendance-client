@@ -18,6 +18,7 @@ export interface EmployeeResponse {
   mobileCheckInEnabled: boolean;
   applicationUserId?: string;
   requireFourPointAttendance?: boolean | null;
+  schedulePatterns?: import('./schedule-pattern').SchedulePatternDto[];
 }
 
 export enum EmployeeStatus {

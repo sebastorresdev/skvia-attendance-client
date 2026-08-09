@@ -15,8 +15,10 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 
 import { DashboardService } from '../../services/dashboard.service';
 import { DashboardStatsResponse } from '../../models/dashboard-stats';
+import { ScheduleAlert } from '../../models/schedule-alert';
 import { BranchService } from '../../../branch/services/branch-service';
 import { BranchResponse } from '../../../branch/models/branch-response';
+import { EmployeeService } from '../../../employee/services/employee-service';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,9 +44,13 @@ export class DashboardComponent implements OnInit {
   private _messageService = inject(NzMessageService);
   private _fb = inject(FormBuilder);
 
+  private _employeeService = inject(EmployeeService);
+
   stats = signal<DashboardStatsResponse | null>(null);
   branches = signal<BranchResponse[]>([]);
+  scheduleAlerts = signal<ScheduleAlert[]>([]);
   loading = signal(true);
+  loadingAlerts = signal(false);
 
   form!: FormGroup;
   currentTime = signal(new Date());
@@ -60,6 +66,7 @@ export class DashboardComponent implements OnInit {
 
     this.loadBranches();
     this.loadStats();
+    this.loadScheduleAlerts();
 
     this.form.get('branchId')?.valueChanges.subscribe(() => {
       this.loadStats();
@@ -84,6 +91,39 @@ export class DashboardComponent implements OnInit {
       error: () => {
         this._messageService.error('Error al cargar métricas del Dashboard');
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadScheduleAlerts(): void {
+    this.loadingAlerts.set(true);
+    this._dashboardService.getScheduleAlerts().subscribe({
+      next: (res) => {
+        this.scheduleAlerts.set(res);
+        this.loadingAlerts.set(false);
+      },
+      error: () => {
+        this._messageService.error('Error al cargar alertas de horarios');
+        this.loadingAlerts.set(false);
+      }
+    });
+  }
+
+  generateSchedules(employeeId: string): void {
+    const start = new Date();
+    const end = new Date();
+    end.setMonth(end.getMonth() + 2); // Generar por 2 meses
+
+    const startDateStr = start.toISOString().split('T')[0];
+    const endDateStr = end.toISOString().split('T')[0];
+
+    this._employeeService.generateSchedules(employeeId, startDateStr, endDateStr).subscribe({
+      next: () => {
+        this._messageService.success('Horarios generados exitosamente');
+        this.loadScheduleAlerts();
+      },
+      error: () => {
+        this._messageService.error('Error al generar los horarios. Asegúrese que el empleado tiene una plantilla configurada.');
       }
     });
   }

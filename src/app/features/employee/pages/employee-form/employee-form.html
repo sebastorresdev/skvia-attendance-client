@@ -166,5 +166,10 @@
       </nz-form-item>
     </div>
   </nz-card>
+
+  <div class="flex justify-end gap-2 mt-4 mb-6">
+    <button nz-button type="button" (click)="goBack()">Cancelar</button>
+    <button nz-button nzType="primary" [nzLoading]="loading()">Guardar Empleado</button>
+  </div>
 </form>
 }

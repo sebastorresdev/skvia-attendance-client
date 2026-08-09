@@ -14,4 +14,6 @@ export interface CreateEmployeeRequest {
   photoUrl?: string;
   mainBranchId?: string;
   requireFourPointAttendance?: boolean | null;
+  mobileCheckInEnabled?: boolean;
+  schedulePatterns?: import('./schedule-pattern').SchedulePatternDto[];
 }

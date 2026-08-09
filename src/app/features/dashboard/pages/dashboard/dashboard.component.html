@@ -135,6 +135,50 @@
       </div>
     </div>
 
+    <!-- Schedule Alerts -->
+    <div class="mt-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+      <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+        <span nz-icon nzType="warning" class="text-yellow-500"></span>
+        Alertas de Horarios
+      </h3>
+
+      <nz-table #alertsTable [nzData]="scheduleAlerts()" [nzLoading]="loadingAlerts()" [nzShowPagination]="true" [nzPageSize]="5" nzSize="small">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Última Fecha</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alert of alertsTable.data; track alert.employeeId) {
+            <tr>
+              <td>
+                <div class="font-semibold text-sm">{{ alert.employeeName }}</div>
+                <div class="text-xs text-gray-500">{{ alert.employeeCode }}</div>
+              </td>
+              <td>
+                @if (alert.lastScheduleDate) {
+                  <nz-tag nzColor="warning">Vence: {{ alert.lastScheduleDate | date:'dd/MM/yyyy' }}</nz-tag>
+                } @else {
+                  <nz-tag nzColor="error">Sin horario</nz-tag>
+                }
+              </td>
+              <td>
+                <button nz-button nzType="primary" nzSize="small" (click)="generateSchedules(alert.employeeId)">
+                  <span nz-icon nzType="sync"></span> Generar 2 meses
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="text-center text-gray-400 py-6">No hay alertas de horarios por vencer.</td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </div>
+
     <!-- Recent Activities Table -->
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
       <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
