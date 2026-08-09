@@ -123,7 +123,19 @@ export class EmployeeForm implements OnInit {
       mainBranchId: [null],
       mobileCheckInEnabled: [false],
       applicationUserId: [null],
-      requireFourPointAttendance: [null]
+      requireFourPointAttendance: [false],
+      isAttendanceTracked: [true],
+      autoCompleteClockOut: [false]
+    });
+
+    this.form.get('mobileCheckInEnabled')?.valueChanges.subscribe(enabled => {
+      const userCtrl = this.form.get('applicationUserId');
+      if (enabled) {
+        userCtrl?.setValidators([Validators.required]);
+      } else {
+        userCtrl?.clearValidators();
+      }
+      userCtrl?.updateValueAndValidity();
     });
   }
 
@@ -147,7 +159,9 @@ export class EmployeeForm implements OnInit {
           mainBranchId: emp.mainBranchId || null,
           mobileCheckInEnabled: (emp as any).mobileCheckInEnabled || false,
           applicationUserId: (emp as any).applicationUserId || null,
-          requireFourPointAttendance: emp.requireFourPointAttendance
+          requireFourPointAttendance: emp.requireFourPointAttendance || false,
+          isAttendanceTracked: emp.isAttendanceTracked ?? true,
+          autoCompleteClockOut: emp.autoCompleteClockOut || false
         });
         this.initialLoading.set(false);
       },
@@ -171,6 +185,7 @@ export class EmployeeForm implements OnInit {
           control.updateValueAndValidity({ onlySelf: true });
         }
       });
+      this._messageService.warning('Por favor, revise los campos marcados en rojo antes de guardar.');
       return;
     }
 
@@ -192,7 +207,10 @@ export class EmployeeForm implements OnInit {
       mainBranchId: val.mainBranchId || null,
       mobileCheckInEnabled: val.mobileCheckInEnabled,
       applicationUserId: val.applicationUserId || null,
-      requireFourPointAttendance: val.requireFourPointAttendance === 'null' ? null : val.requireFourPointAttendance
+      requireFourPointAttendance: val.requireFourPointAttendance,
+      isAttendanceTracked: val.isAttendanceTracked,
+      autoCompleteClockOut: val.autoCompleteClockOut,
+      allowedKioskIds: [] // Currently kiosks will be a future implementation on this form, or maybe wait
     };
 
     const obs$ = this.isEdit 

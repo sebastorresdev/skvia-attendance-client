@@ -13,7 +13,10 @@ export interface CreateEmployeeRequest {
   department?: string;
   photoUrl?: string;
   mainBranchId?: string;
-  requireFourPointAttendance?: boolean | null;
-  mobileCheckInEnabled?: boolean;
-  schedulePatterns?: import('./schedule-pattern').SchedulePatternDto[];
+  mobileCheckInEnabled: boolean;
+  applicationUserId?: string;
+  requireFourPointAttendance: boolean;
+  isAttendanceTracked: boolean;
+  autoCompleteClockOut: boolean;
+  allowedKioskIds?: string[];
 }

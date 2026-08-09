@@ -17,8 +17,10 @@ export interface EmployeeResponse {
   status: EmployeeStatus;
   mobileCheckInEnabled: boolean;
   applicationUserId?: string;
-  requireFourPointAttendance?: boolean | null;
-  schedulePatterns?: import('./schedule-pattern').SchedulePatternDto[];
+  requireFourPointAttendance: boolean;
+  isAttendanceTracked: boolean;
+  autoCompleteClockOut: boolean;
+  allowedKioskIds: string[];
 }
 
 export enum EmployeeStatus {

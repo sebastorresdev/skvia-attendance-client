@@ -436,26 +436,6 @@ export class EmployeeScheduleForm implements OnInit {
     });
   }
 
-  generateFromPattern(months: number = 2): void {
-    const start = new Date();
-    const end = addMonths(start, months);
-    const startDateStr = format(start, 'yyyy-MM-dd');
-    const endDateStr = format(end, 'yyyy-MM-dd');
-
-    this.saving.set(true);
-    this._employeeService.generateSchedules(this.employeeId, startDateStr, endDateStr).subscribe({
-      next: () => {
-        this._messageService.success(`Horarios generados correctamente desde la plantilla para los próximos ${months} meses`);
-        this.loadScheduleForCurrentPeriod();
-        this.saving.set(false);
-      },
-      error: (err) => {
-        this._messageService.error('Error al generar horarios. Verifique que el empleado tenga configurada la plantilla semanal.');
-        this.saving.set(false);
-      }
-    });
-  }
-
   // --- MODAL DE ASIGNACIÓN RÁPIDA POR PATRÓN Y RANGO ---
   patternModalVisible = signal(false);
   patternForm!: FormGroup;
@@ -481,21 +461,16 @@ export class EmployeeScheduleForm implements OnInit {
   }
 
   private createDefaultPatternControls(): FormGroup[] {
-    const days = [1, 2, 3, 4, 5, 6, 0]; // Lunes a Domingo
-    const existing = this.currentEmployee?.schedulePatterns || [];
-
-    return days.map(d => {
-      const match = existing.find(p => p.dayOfWeek === d);
-      const isWorkDay = match ? match.isWorkDay : d !== 0;
-      const startTime = match?.startTime ? new Date(`1970-01-01T${match.startTime}`) : (d !== 0 ? new Date(0,0,0,8,0,0) : null);
-      const endTime = match?.endTime ? new Date(`1970-01-01T${match.endTime}`) : (d !== 0 ? new Date(0,0,0,18,0,0) : null);
+    const defaultDays = [0, 1, 2, 3, 4, 5, 6]; // Domingo a Sábado
+    return defaultDays.map(d => {
+      const isWorkDay = d >= 1 && d <= 5; // Lunes a Viernes default
 
       const group = this._fb.group({
         dayOfWeek: [d],
         isWorkDay: [isWorkDay],
-        baseScheduleId: [null],
-        startTime: [startTime],
-        endTime: [endTime]
+        baseScheduleId: [null as string | null],
+        startTime: [null as Date | null],
+        endTime: [null as Date | null]
       });
 
       group.get('baseScheduleId')?.valueChanges.subscribe(schId => {

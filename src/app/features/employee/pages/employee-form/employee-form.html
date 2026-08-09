@@ -132,16 +132,42 @@
   <!-- CARD 4: Configuración de Asistencia          -->
   <!-- ============================================ -->
   <nz-card nzTitle="Configuración de Asistencia" class="mb-4!">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-      <nz-form-item class="mb-0 flex items-center h-full">
-        <nz-form-label>Habilitar Marcación Móvil</nz-form-label>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
+      <nz-form-item class="mb-0 flex flex-col">
+        <nz-form-label>¿Controlar Asistencia?</nz-form-label>
+        <nz-form-control>
+          <nz-switch formControlName="isAttendanceTracked"></nz-switch>
+          <span class="ml-2 text-gray-500 text-sm">Habilita el control de asistencia para este empleado.</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0 flex flex-col">
+        <nz-form-label>Permitir Marcación Móvil (App)</nz-form-label>
         <nz-form-control>
           <nz-switch formControlName="mobileCheckInEnabled"></nz-switch>
           <span class="ml-2 text-gray-500 text-sm">Permite a este empleado registrar asistencia desde la app móvil.</span>
         </nz-form-control>
       </nz-form-item>
 
-      <nz-form-item class="mb-0">
+      <nz-form-item class="mb-0 flex flex-col">
+        <nz-form-label>Modo de Marcación (Refrigerio)</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="requireFourPointAttendance">
+            <nz-option [nzValue]="false" nzLabel="2 Puntos (Ingreso y Salida)"></nz-option>
+            <nz-option [nzValue]="true" nzLabel="4 Puntos (Ingreso, Inicio Ref., Fin Ref., Salida)"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0 flex flex-col">
+        <nz-form-label>Autocompletar Salida</nz-form-label>
+        <nz-form-control>
+          <nz-switch formControlName="autoCompleteClockOut"></nz-switch>
+          <span class="ml-2 text-gray-500 text-sm">Útil para personal en campo que no marca salida.</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item class="mb-0 flex flex-col col-span-1 md:col-span-2">
         <nz-form-label>Vincular Usuario del Sistema</nz-form-label>
         <nz-form-control>
           <nz-select formControlName="applicationUserId" nzPlaceHolder="Seleccione un usuario" nzAllowClear>
@@ -152,24 +178,8 @@
           <p class="text-xs text-gray-400 mt-1">Requerido si se habilita la marcación móvil.</p>
         </nz-form-control>
       </nz-form-item>
-
-      <nz-form-item class="mb-0 mt-2">
-        <nz-form-label>Política de Refrigerio (4 Puntos)</nz-form-label>
-        <nz-form-control>
-          <nz-select formControlName="requireFourPointAttendance">
-            <nz-option [nzValue]="null" nzLabel="Heredar de la Sede"></nz-option>
-            <nz-option [nzValue]="true" nzLabel="Exigir (4 Puntos)"></nz-option>
-            <nz-option [nzValue]="false" nzLabel="No exigir (2 Puntos)"></nz-option>
-          </nz-select>
-          <p class="text-xs text-gray-400 mt-1">Sobrescribe la configuración de la Sede si se especifica.</p>
-        </nz-form-control>
-      </nz-form-item>
     </div>
   </nz-card>
 
-  <div class="flex justify-end gap-2 mt-4 mb-6">
-    <button nz-button type="button" (click)="goBack()">Cancelar</button>
-    <button nz-button nzType="primary" [nzLoading]="loading()">Guardar Empleado</button>
-  </div>
 </form>
 }

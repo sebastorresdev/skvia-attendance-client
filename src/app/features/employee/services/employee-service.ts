@@ -46,7 +46,7 @@ export class EmployeeService {
     return this._http.put<void>(`${this._base}/${id}/status`, { status });
   }
 
-  generateSchedules(id: string, startDate: string, endDate: string, patterns?: import('../models/schedule-pattern').SchedulePatternDto[]): Observable<void> {
+  generateSchedules(id: string, startDate: string, endDate: string, patterns?: any[]): Observable<void> {
     return this._http.post<void>(`${this._base}/${id}/schedules/generate`, { startDate, endDate, patterns });
   }
 }
