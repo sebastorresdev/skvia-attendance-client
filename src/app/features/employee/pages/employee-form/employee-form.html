@@ -1,18 +1,16 @@
-<div class="flex flex-row items-center justify-between">
+<div class="flex flex-row items-center justify-between mb-4">
   <nz-breadcrumb>
     <nz-breadcrumb-item>
-      <a [routerLink]="['/employees']">Lista Empleados</a>
+      <a routerLink="/employees">Lista Empleados</a>
     </nz-breadcrumb-item>
-    <nz-breadcrumb-item>{{ isEdit ? 'Editar' : 'Nuevo' }}</nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ isEdit ? 'Editar Empleado' : 'Nuevo Empleado' }}</nz-breadcrumb-item>
   </nz-breadcrumb>
 
   <div class="flex gap-2">
-    <button nz-button type="button" [routerLink]="['/employees']">Cancelar</button>
+    <button nz-button type="button" routerLink="/employees">Cancelar</button>
     <button nz-button nzType="primary" [nzLoading]="loading()" (click)="submitForm()">Guardar</button>
   </div>
 </div>
-
-<nz-divider class="my-4!" />
 
 @if (initialLoading()) {
 <div class="flex flex-col items-center justify-center py-24">
@@ -22,163 +20,221 @@
 } @else {
 <form nz-form [formGroup]="form" nzLayout="vertical" class="max-w-5xl">
   
-  <!-- ============================================ -->
-  <!-- CARD 1: Datos Básicos                        -->
-  <!-- ============================================ -->
-  <nz-card nzTitle="Datos Básicos" class="mb-4!">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
-      <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Nombres</nz-form-label>
-        <nz-form-control nzErrorTip="Requerido (máx 100 char)">
-          <input nz-input formControlName="firstName" placeholder="Ej: Juan Carlos" />
-        </nz-form-control>
-      </nz-form-item>
+  <!-- CABECERA: DATOS BÁSICOS -->
+  <nz-card class="mb-4">
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- FOTO DEL EMPLEADO -->
+      <div class="shrink-0 relative group w-32 h-32 pt-2 ml-4">
+        <nz-upload [nzCustomRequest]="customUpload" nzName="avatar" nzListType="picture-card" [nzShowUploadList]="false"
+          [nzBeforeUpload]="beforeUpload" (nzChange)="handleChange($event)"
+          class="[&_.ant-upload]:w-28! [&_.ant-upload]:h-28! [&_.ant-upload]:overflow-hidden! [&_.ant-upload]:rounded!">
 
-      <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Apellidos</nz-form-label>
-        <nz-form-control nzErrorTip="Requerido (máx 100 char)">
-          <input nz-input formControlName="lastName" placeholder="Ej: Pérez Gómez" />
-        </nz-form-control>
-      </nz-form-item>
+          @if (!avatarUrl()) {
+          <div class="flex flex-col items-center justify-center w-full h-full">
+            <nz-icon class="text-2xl mb-1 opacity-50" [nzType]="uploadingPhoto() ? 'loading' : 'camera'" />
+          </div>
+          } @else {
+          <div class="w-full h-full overflow-hidden">
+            <img [src]="avatarUrl()" class="w-full h-full object-cover block" />
+          </div>
+          }
+        </nz-upload>
 
-      <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Código de Empleado</nz-form-label>
-        <nz-form-control nzErrorTip="Requerido (máx 10 char)">
-          <input nz-input formControlName="code" placeholder="Ej: EMP-001" class="uppercase" />
-        </nz-form-control>
-      </nz-form-item>
+        @if (avatarUrl()) {
+        <button type="button" (click)="removeAvatar($event)"
+          class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer z-20"
+          title="Eliminar foto">
+          <nz-icon nzType="delete" class="text-xs" />
+        </button>
+        }
+      </div>
+
+      <!-- DATOS PRINCIPALES -->
+      <div class="flex-grow">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+          <nz-form-item class="mb-0">
+            <nz-form-label nzRequired>Nombres</nz-form-label>
+            <nz-form-control nzErrorTip="Requerido (máx 100 char)">
+              <input nz-input formControlName="firstName" placeholder="Ej: Juan Carlos" />
+            </nz-form-control>
+          </nz-form-item>
+          
+          <nz-form-item class="mb-0">
+            <nz-form-label nzRequired>Apellidos</nz-form-label>
+            <nz-form-control nzErrorTip="Requerido (máx 100 char)">
+              <input nz-input formControlName="lastName" placeholder="Ej: Pérez Gómez" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <nz-form-item class="mb-0 mt-2">
+            <nz-form-label>Correo Electrónico</nz-form-label>
+            <nz-form-control nzErrorTip="Correo inválido">
+              <input nz-input formControlName="email" type="email" placeholder="Ej: jperez@empresa.com" />
+            </nz-form-control>
+          </nz-form-item>
+          
+          <nz-form-item class="mb-0 mt-2">
+            <nz-form-label>Teléfono</nz-form-label>
+            <nz-form-control nzErrorTip="Máx 20 char">
+              <input nz-input formControlName="phone" placeholder="Ej: +51 987654321" />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
     </div>
   </nz-card>
 
-  <!-- ============================================ -->
-  <!-- CARD 2: Identificación                       -->
-  <!-- ============================================ -->
-  <nz-card nzTitle="Identificación" class="mb-4!">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
-      <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Tipo de Documento</nz-form-label>
-        <nz-form-control nzErrorTip="Requerido">
-          <nz-select formControlName="documentType">
-            @for (type of documentTypes; track type.value) {
-              <nz-option [nzValue]="type.value" [nzLabel]="type.label"></nz-option>
-            }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
+  <!-- CONFIGURACIONES ADICIONALES (TABS) -->
+  <nz-card>
+    <nz-tabs>
+      <!-- TAB 1: Datos Laborales -->
+      <nz-tab nzTitle="Trabajo">
+        <div class="py-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+            
+            <nz-form-item class="mb-0">
+              <nz-form-label nzRequired>Fecha de Contratación</nz-form-label>
+              <nz-form-control nzErrorTip="Requerido">
+                <nz-date-picker formControlName="hireDate" class="w-full" nzFormat="yyyy-MM-dd"></nz-date-picker>
+              </nz-form-control>
+            </nz-form-item>
 
-      <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Nro. de Documento</nz-form-label>
-        <nz-form-control nzErrorTip="Requerido (máx 20 char)">
-          <input nz-input formControlName="documentNumber" placeholder="Ej: 71234567" />
-        </nz-form-control>
-      </nz-form-item>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzRequired>Código de Empleado</nz-form-label>
+              <nz-form-control nzErrorTip="Requerido (máx 10 char)">
+                <input nz-input formControlName="code" placeholder="Ej: EMP-001" class="uppercase" />
+              </nz-form-control>
+            </nz-form-item>
 
-      <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Fecha de Contratación</nz-form-label>
-        <nz-form-control nzErrorTip="Requerido">
-          <nz-date-picker formControlName="hireDate" class="w-full" nzFormat="yyyy-MM-dd"></nz-date-picker>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-  </nz-card>
+            <nz-form-item class="mb-0 mt-2">
+              <nz-form-label>Sede Principal (Opcional)</nz-form-label>
+              <nz-form-control>
+                <nz-select formControlName="mainBranchId" nzPlaceHolder="Seleccione una sede" nzAllowClear>
+                  @for (branch of branches(); track branch.id) {
+                    <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+                  }
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+            
+            <nz-form-item class="mb-0 mt-2">
+              <nz-form-label>Puesto</nz-form-label>
+              <nz-form-control nzErrorTip="Máx 100 char">
+                <input nz-input formControlName="position" placeholder="Ej: Analista de Planillas" />
+              </nz-form-control>
+            </nz-form-item>
 
-  <!-- ============================================ -->
-  <!-- CARD 3: Empresa y Contacto                   -->
-  <!-- ============================================ -->
-  <nz-card nzTitle="Empresa y Contacto" class="mb-4!">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-      <nz-form-item class="mb-0">
-        <nz-form-label>Departamento / Área</nz-form-label>
-        <nz-form-control nzErrorTip="Máx 100 char">
-          <input nz-input formControlName="department" placeholder="Ej: Recursos Humanos" />
-        </nz-form-control>
-      </nz-form-item>
+            <nz-form-item class="mb-0 mt-2">
+              <nz-form-label>Departamento</nz-form-label>
+              <nz-form-control nzErrorTip="Seleccione un departamento">
+                <nz-select formControlName="departmentId" nzPlaceHolder="Seleccione un departamento" nzAllowClear>
+                  @for (dept of departments(); track dept.id) {
+                    <nz-option [nzValue]="dept.id" [nzLabel]="dept.name"></nz-option>
+                  }
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
 
-      <nz-form-item class="mb-0">
-        <nz-form-label>Puesto</nz-form-label>
-        <nz-form-control nzErrorTip="Máx 100 char">
-          <input nz-input formControlName="position" placeholder="Ej: Analista de Planillas" />
-        </nz-form-control>
-      </nz-form-item>
+          </div>
+        </div>
+      </nz-tab>
 
-      <nz-form-item class="mb-0 mt-2">
-        <nz-form-label>Correo Electrónico</nz-form-label>
-        <nz-form-control nzErrorTip="Correo inválido">
-          <input nz-input formControlName="email" type="email" placeholder="Ej: jperez@empresa.com" />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item class="mb-0 mt-2">
-        <nz-form-label>Teléfono</nz-form-label>
-        <nz-form-control nzErrorTip="Máx 20 char">
-          <input nz-input formControlName="phone" placeholder="Ej: +51 987654321" />
-        </nz-form-control>
-      </nz-form-item>
+      <!-- TAB 2: Identificación -->
+      <nz-tab nzTitle="Personal">
+        <div class="py-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+            <nz-form-item class="mb-0">
+              <nz-form-label nzRequired>Tipo de Documento</nz-form-label>
+              <nz-form-control nzErrorTip="Requerido">
+                <nz-select formControlName="documentType">
+                  @for (type of documentTypes; track type.value) {
+                    <nz-option [nzValue]="type.value" [nzLabel]="type.label"></nz-option>
+                  }
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
       
-      <nz-form-item class="mb-0 mt-2">
-        <nz-form-label>Sede Principal (Opcional)</nz-form-label>
-        <nz-form-control>
-          <nz-select formControlName="mainBranchId" nzPlaceHolder="Seleccione una sede" nzAllowClear>
-            @for (branch of branches(); track branch.id) {
-              <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzRequired>Nro. de Documento</nz-form-label>
+              <nz-form-control nzErrorTip="Requerido (máx 20 char)">
+                <input nz-input formControlName="documentNumber" placeholder="Ej: 71234567" />
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+      </nz-tab>
+
+      <!-- TAB 3: Asistencia y Sistema -->
+      <nz-tab nzTitle="Asistencia y Sistema">
+        <div class="py-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
+            <nz-form-item class="mb-0 flex flex-col">
+              <nz-form-label>¿Controlar Asistencia?</nz-form-label>
+              <nz-form-control>
+                <nz-switch formControlName="isAttendanceTracked"></nz-switch>
+                <span class="ml-2 text-gray-500 text-sm">Habilita el control de asistencia para este empleado.</span>
+              </nz-form-control>
+            </nz-form-item>
+      
+            @if (form.get('isAttendanceTracked')?.value) {
+            <nz-form-item class="mb-0 flex flex-col">
+              <nz-form-label>Permitir Marcación Móvil (App)</nz-form-label>
+              <nz-form-control>
+                <nz-switch formControlName="mobileCheckInEnabled"></nz-switch>
+                <span class="ml-2 text-gray-500 text-sm">Permite a este empleado registrar asistencia desde la app móvil.</span>
+              </nz-form-control>
+            </nz-form-item>
+      
+            <nz-form-item class="mb-0 flex flex-col">
+              <nz-form-label>Modo de Marcación (Refrigerio)</nz-form-label>
+              <nz-form-control>
+                <nz-select formControlName="requireFourPointAttendance">
+                  <nz-option [nzValue]="false" nzLabel="2 Puntos (Ingreso y Salida)"></nz-option>
+                  <nz-option [nzValue]="true" nzLabel="4 Puntos (Ingreso, Inicio Ref., Fin Ref., Salida)"></nz-option>
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+      
+            <nz-form-item class="mb-0 flex flex-col">
+              <nz-form-label>Autocompletar Salida</nz-form-label>
+              <nz-form-control>
+                <nz-switch formControlName="autoCompleteClockOut"></nz-switch>
+                <span class="ml-2 text-gray-500 text-sm">Útil para personal en campo que no marca salida.</span>
+              </nz-form-control>
+            </nz-form-item>
             }
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
-  </nz-card>
+          </div>
 
-  <!-- ============================================ -->
-  <!-- CARD 4: Configuración de Asistencia          -->
-  <!-- ============================================ -->
-  <nz-card nzTitle="Configuración de Asistencia" class="mb-4!">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
-      <nz-form-item class="mb-0 flex flex-col">
-        <nz-form-label>¿Controlar Asistencia?</nz-form-label>
-        <nz-form-control>
-          <nz-switch formControlName="isAttendanceTracked"></nz-switch>
-          <span class="ml-2 text-gray-500 text-sm">Habilita el control de asistencia para este empleado.</span>
-        </nz-form-control>
-      </nz-form-item>
+          <nz-divider class="my-4!"></nz-divider>
 
-      <nz-form-item class="mb-0 flex flex-col">
-        <nz-form-label>Permitir Marcación Móvil (App)</nz-form-label>
-        <nz-form-control>
-          <nz-switch formControlName="mobileCheckInEnabled"></nz-switch>
-          <span class="ml-2 text-gray-500 text-sm">Permite a este empleado registrar asistencia desde la app móvil.</span>
-        </nz-form-control>
-      </nz-form-item>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
+            <nz-form-item class="mb-0 flex flex-col w-full">
+              <nz-form-label>Vincular Usuario del Sistema</nz-form-label>
+              <nz-form-control>
+                <nz-select formControlName="applicationUserId" nzShowSearch nzPlaceHolder="Escriba o seleccione un usuario" nzAllowClear class="w-full">
+                  @for (user of users(); track user.id) {
+                    <nz-option [nzValue]="user.id" [nzLabel]="user.userName"></nz-option>
+                  }
+                </nz-select>
+                <p class="text-xs text-gray-400 mt-1">Requerido si se habilita la marcación móvil.</p>
+              </nz-form-control>
+            </nz-form-item>
 
-      <nz-form-item class="mb-0 flex flex-col">
-        <nz-form-label>Modo de Marcación (Refrigerio)</nz-form-label>
-        <nz-form-control>
-          <nz-select formControlName="requireFourPointAttendance">
-            <nz-option [nzValue]="false" nzLabel="2 Puntos (Ingreso y Salida)"></nz-option>
-            <nz-option [nzValue]="true" nzLabel="4 Puntos (Ingreso, Inicio Ref., Fin Ref., Salida)"></nz-option>
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item class="mb-0 flex flex-col">
-        <nz-form-label>Autocompletar Salida</nz-form-label>
-        <nz-form-control>
-          <nz-switch formControlName="autoCompleteClockOut"></nz-switch>
-          <span class="ml-2 text-gray-500 text-sm">Útil para personal en campo que no marca salida.</span>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item class="mb-0 flex flex-col col-span-1 md:col-span-2">
-        <nz-form-label>Vincular Usuario del Sistema</nz-form-label>
-        <nz-form-control>
-          <nz-select formControlName="applicationUserId" nzPlaceHolder="Seleccione un usuario" nzAllowClear>
-            @for (user of users(); track user.id) {
-              <nz-option [nzValue]="user.id" [nzLabel]="user.userName"></nz-option>
-            }
-          </nz-select>
-          <p class="text-xs text-gray-400 mt-1">Requerido si se habilita la marcación móvil.</p>
-        </nz-form-control>
-      </nz-form-item>
-    </div>
+            <nz-form-item class="mb-0 flex flex-col w-full">
+              <nz-form-label>Lugares de Marcación (Sedes/Kioskos)</nz-form-label>
+              <nz-form-control>
+                <nz-select formControlName="allowedWorkplaceIds" nzMode="multiple" nzPlaceHolder="Seleccione lugares permitidos" nzAllowClear class="w-full">
+                  @for (wp of workplaces(); track wp.id) {
+                    <nz-option [nzValue]="wp.id" [nzLabel]="wp.name"></nz-option>
+                  }
+                </nz-select>
+                <p class="text-xs text-gray-400 mt-1">Si está vacío, no podrá marcar.</p>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+        </div>
+      </nz-tab>
+    </nz-tabs>
   </nz-card>
 
 </form>

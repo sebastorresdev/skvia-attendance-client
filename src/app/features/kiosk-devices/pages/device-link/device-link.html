@@ -17,23 +17,47 @@
 <div class="max-w-3xl">
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Vincular Nuevo Dispositivo</h1>
-    <p class="text-gray-500">Autoriza a este dispositivo para que los empleados puedan registrar su asistencia.</p>
+    <p class="text-gray-500">Autoriza a una PC o tablet remota para que los empleados puedan registrar su asistencia.</p>
+  </div>
+
+  <!-- Selection Method -->
+  <div class="mb-4">
+    <nz-radio-group [(ngModel)]="pairingMethod" nzButtonStyle="solid">
+      <label nz-radio-button nzValue="pin">🔢 Con Código PIN (Remoto / Trujillo)</label>
+      <label nz-radio-button nzValue="link">🔗 Generar Enlace Directo / Esta PC</label>
+    </nz-radio-group>
   </div>
 
   <nz-card>
     <form nz-form [formGroup]="form" nzLayout="vertical">
+      
+      <!-- PIN Code Field (If PIN mode) -->
+      @if (pairingMethod === 'pin') {
+        <div class="p-4 mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <nz-form-item class="mb-0">
+            <nz-form-label nzRequired>Código PIN de la Pantalla Remota (6 dígitos)</nz-form-label>
+            <nz-form-control nzErrorTip="Ingrese el código de 6 dígitos que muestra la pantalla del Kiosko remota">
+              <input nz-input formControlName="pairingCode" placeholder="Ej: 784912 font-mono" class="text-lg tracking-widest font-bold uppercase max-w-xs" maxLength="6" />
+            </nz-form-control>
+          </nz-form-item>
+          <p class="text-xs text-blue-600 dark:text-blue-300 mt-2">
+            💡 En la pantalla remota (ej: Trujillo), abra <code>/kiosk</code> para ver el PIN de 6 dígitos generado en tiempo real.
+          </p>
+        </div>
+      }
+
       <nz-form-item>
         <nz-form-label nzRequired>Nombre del Dispositivo</nz-form-label>
         <nz-form-control nzErrorTip="Por favor ingresa un nombre para identificar el dispositivo">
-          <input nz-input formControlName="name" placeholder="Ej: Tablet Recepción Principal" />
+          <input nz-input formControlName="name" placeholder="Ej: PC Recepción Trujillo / Tablet San Isidro" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item class="mb-0">
-        <nz-form-label nzRequired>Sede Asignada</nz-form-label>
-        <nz-form-control nzErrorTip="Por favor selecciona la sede donde estará este dispositivo">
-          <nz-select formControlName="branchId" nzPlaceHolder="Selecciona una sede" [nzLoading]="isLoadingBranches()">
-            <nz-option *ngFor="let branch of branches()" [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+        <nz-form-label nzRequired>Lugar de Marcación Asignado</nz-form-label>
+        <nz-form-control nzErrorTip="Por favor selecciona el lugar de marcación donde estará este dispositivo">
+          <nz-select formControlName="workplaceId" nzPlaceHolder="Selecciona un lugar de marcación" [nzLoading]="isLoadingWorkplaces()">
+            <nz-option *ngFor="let workplace of workplaces()" [nzValue]="workplace.id" [nzLabel]="workplace.name"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

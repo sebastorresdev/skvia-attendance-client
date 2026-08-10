@@ -49,4 +49,10 @@ export class EmployeeService {
   generateSchedules(id: string, startDate: string, endDate: string, patterns?: any[]): Observable<void> {
     return this._http.post<void>(`${this._base}/${id}/schedules/generate`, { startDate, endDate, patterns });
   }
+
+  uploadPhoto(file: File): Observable<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this._http.post<{ url: string }>(`${this._base}/upload-photo`, formData);
+  }
 }

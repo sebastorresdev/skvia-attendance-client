@@ -1,6 +1,7 @@
 <div class="p-6 space-y-6">
   <!-- Top Banner & Filters -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+  <div
+    class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
     <div>
       <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
         <span nz-icon nzType="dashboard" class="text-indigo-600 dark:text-indigo-400"></span>
@@ -12,7 +13,8 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-3">
-      <div class="bg-gray-50 dark:bg-gray-700/50 px-3.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center gap-2">
+      <div
+        class="bg-gray-50 dark:bg-gray-700/50 px-3.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center gap-2">
         <span nz-icon nzType="clock-circle" class="text-indigo-500"></span>
         <span class="font-mono text-sm font-semibold text-gray-700 dark:text-gray-200">
           {{ currentTime() | date:'dd/MM/yyyy HH:mm:ss' }}
@@ -22,7 +24,7 @@
       <form [formGroup]="form" class="w-48 mb-0">
         <nz-select formControlName="branchId" nzPlaceHolder="Todas las sedes" nzAllowClear class="w-full">
           @for (branch of branches(); track branch.id) {
-            <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
+          <nz-option [nzValue]="branch.id" [nzLabel]="branch.name"></nz-option>
           }
         </nz-select>
       </form>
@@ -34,196 +36,204 @@
   </div>
 
   @if (stats(); as s) {
-    <!-- KPI Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      <!-- Active Employees -->
-      <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
-        <div>
-          <p class="text-blue-100 font-medium text-sm">Personal Activo</p>
-          <h3 class="text-3xl font-extrabold mt-1">{{ s.totalActiveEmployees }}</h3>
-          <p class="text-xs text-blue-200 mt-1">Registrados en sistema</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-          <span nz-icon nzType="team"></span>
-        </div>
+  <!-- KPI Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Active Employees -->
+    <div
+      class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
+      <div>
+        <p class="text-blue-100 font-medium text-sm">Personal Activo</p>
+        <h3 class="text-3xl text-white! font-extrabold mt-1">{{ s.totalActiveEmployees }}</h3>
+        <p class="text-xs text-blue-200 mt-1">Registrados en sistema</p>
       </div>
-
-      <!-- Today CheckIns -->
-      <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
-        <div>
-          <p class="text-emerald-100 font-medium text-sm">Asistencias Hoy</p>
-          <h3 class="text-3xl font-extrabold mt-1">{{ s.todayCheckIns }}</h3>
-          <p class="text-xs text-emerald-200 mt-1">Entradas registradas</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-          <span nz-icon nzType="check-circle"></span>
-        </div>
-      </div>
-
-      <!-- Today Late -->
-      <div class="bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
-        <div>
-          <p class="text-rose-100 font-medium text-sm">Tardanzas Hoy</p>
-          <h3 class="text-3xl font-extrabold mt-1">{{ s.todayLateCheckIns }}</h3>
-          <p class="text-xs text-rose-200 mt-1">Ingresos fuera de tolerancia</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-          <span nz-icon nzType="clock-circle"></span>
-        </div>
-      </div>
-
-      <!-- On Break / Absences -->
-      <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
-        <div>
-          <p class="text-amber-100 font-medium text-sm">En Break / Ausencias</p>
-          <h3 class="text-3xl font-extrabold mt-1">{{ s.todayOnBreak }} / {{ s.todayEstimatedAbsences }}</h3>
-          <p class="text-xs text-amber-200 mt-1">En refrigerio / Sin marcar</p>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
-          <span nz-icon nzType="coffee"></span>
-        </div>
+      <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+        <nz-icon nzType="team"></nz-icon>
       </div>
     </div>
 
-    <!-- Charts & Breakdown Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Weekly Trend -->
-      <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-          <span nz-icon nzType="line-chart" class="text-indigo-600"></span>
-          Tendencia Semanal de Asistencia
-        </h3>
-        <div class="space-y-4">
-          @for (item of s.weeklyTrend; track item.dateLabel) {
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1 text-gray-600 dark:text-gray-300">
-                <span>{{ item.dateLabel }}</span>
-                <span>Puntuales: {{ item.onTimeCount }} | Tardanzas: {{ item.lateCount }}</span>
-              </div>
-              <div class="w-full bg-gray-100 dark:bg-gray-700 h-3 rounded-full overflow-hidden flex">
-                @if (item.onTimeCount + item.lateCount > 0) {
-                  <div class="bg-emerald-500 h-full" [style.width.%]="(item.onTimeCount / (item.onTimeCount + item.lateCount)) * 100"></div>
-                  <div class="bg-rose-500 h-full" [style.width.%]="(item.lateCount / (item.onTimeCount + item.lateCount)) * 100"></div>
-                } @else {
-                  <div class="bg-gray-200 dark:bg-gray-600 w-full h-full"></div>
-                }
-              </div>
-            </div>
-          }
-        </div>
+    <!-- Today CheckIns -->
+    <div
+      class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
+      <div>
+        <p class="text-emerald-100 font-medium text-sm">Asistencias Hoy</p>
+        <h3 class="text-3xl text-white! font-extrabold mt-1">{{ s.todayCheckIns }}</h3>
+        <p class="text-xs text-emerald-200 mt-1">Entradas registradas</p>
       </div>
-
-      <!-- Branch Breakdown -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-          <span nz-icon nzType="bank" class="text-indigo-600"></span>
-          Asistencias por Sede Hoy
-        </h3>
-        <div class="space-y-4">
-          @for (b of s.branchBreakdown; track b.branchId) {
-            <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
-              <div>
-                <p class="font-semibold text-sm text-gray-800 dark:text-white">{{ b.branchName }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Marcaciones hoy</p>
-              </div>
-              <nz-tag nzColor="processing" class="text-sm px-3 py-0.5 rounded-full font-bold">{{ b.checkInsCount }}</nz-tag>
-            </div>
-          } @empty {
-            <p class="text-sm text-gray-400 text-center py-6">No hay marcaciones aún hoy.</p>
-          }
-        </div>
+      <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+        <span nz-icon nzType="check-circle"></span>
       </div>
     </div>
 
-    <!-- Schedule Alerts -->
-    <div class="mt-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+    <!-- Today Late -->
+    <div
+      class="bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
+      <div>
+        <p class="text-rose-100 font-medium text-sm">Tardanzas Hoy</p>
+        <h3 class="text-3xl text-white! font-extrabold mt-1">{{ s.todayLateCheckIns }}</h3>
+        <p class="text-xs text-rose-200 mt-1">Ingresos fuera de tolerancia</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+        <span nz-icon nzType="clock-circle"></span>
+      </div>
+    </div>
+
+    <!-- On Break / Absences -->
+    <div
+      class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white shadow-md flex items-center justify-between">
+      <div>
+        <p class="text-amber-100 font-medium text-sm">En Break / Ausencias</p>
+        <h3 class="text-3xl text-white! font-extrabold mt-1">{{ s.todayOnBreak }} / {{ s.todayEstimatedAbsences }}</h3>
+        <p class="text-xs text-amber-200 mt-1">En refrigerio / Sin marcar</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+        <span nz-icon nzType="coffee"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts & Breakdown Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Weekly Trend -->
+    <div
+      class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
       <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-        <span nz-icon nzType="warning" class="text-yellow-500"></span>
-        Alertas de Horarios
+        <span nz-icon nzType="line-chart" class="text-indigo-600"></span>
+        Tendencia Semanal de Asistencia
       </h3>
-
-      <nz-table #alertsTable [nzData]="scheduleAlerts()" [nzLoading]="loadingAlerts()" [nzShowPagination]="true" [nzPageSize]="5" nzSize="small">
-        <thead>
-          <tr>
-            <th>Empleado</th>
-            <th>Última Fecha</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (alert of alertsTable.data; track alert.employeeId) {
-            <tr>
-              <td>
-                <div class="font-semibold text-sm">{{ alert.employeeName }}</div>
-                <div class="text-xs text-gray-500">{{ alert.employeeCode }}</div>
-              </td>
-              <td>
-                @if (alert.lastScheduleDate) {
-                  <nz-tag nzColor="warning">Vence: {{ alert.lastScheduleDate | date:'dd/MM/yyyy' }}</nz-tag>
-                } @else {
-                  <nz-tag nzColor="error">Sin horario</nz-tag>
-                }
-              </td>
-              <td>
-                <button nz-button nzType="primary" nzSize="small" (click)="generateSchedules(alert.employeeId)">
-                  <span nz-icon nzType="sync"></span> Generar 2 meses
-                </button>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="3" class="text-center text-gray-400 py-6">No hay alertas de horarios por vencer.</td>
-            </tr>
-          }
-        </tbody>
-      </nz-table>
+      <div class="space-y-4">
+        @for (item of s.weeklyTrend; track item.dateLabel) {
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1 text-gray-600 dark:text-gray-300">
+            <span>{{ item.dateLabel }}</span>
+            <span>Puntuales: {{ item.onTimeCount }} | Tardanzas: {{ item.lateCount }}</span>
+          </div>
+          <div class="w-full bg-gray-100 dark:bg-gray-700 h-3 rounded-full overflow-hidden flex">
+            @if (item.onTimeCount + item.lateCount > 0) {
+            <div class="bg-emerald-500 h-full"
+              [style.width.%]="(item.onTimeCount / (item.onTimeCount + item.lateCount)) * 100"></div>
+            <div class="bg-rose-500 h-full"
+              [style.width.%]="(item.lateCount / (item.onTimeCount + item.lateCount)) * 100"></div>
+            } @else {
+            <div class="bg-gray-200 dark:bg-gray-600 w-full h-full"></div>
+            }
+          </div>
+        </div>
+        }
+      </div>
     </div>
 
-    <!-- Recent Activities Table -->
+    <!-- Branch Breakdown -->
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
       <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-        <span nz-icon nzType="history" class="text-indigo-600"></span>
-        Últimas Marcaciones del Día
+        <span nz-icon nzType="bank" class="text-indigo-600"></span>
+        Asistencias por Sede Hoy
       </h3>
-
-      <nz-table #actTable [nzData]="s.recentActivities" [nzShowPagination]="false" nzSize="middle">
-        <thead>
-          <tr>
-            <th>Empleado</th>
-            <th>Sede</th>
-            <th>Hora de Entrada</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (act of actTable.data; track act.attendanceId) {
-            <tr>
-              <td>
-                <div class="flex items-center gap-3">
-                  <nz-avatar [nzSrc]="act.photoUrl || undefined" [nzText]="act.employeeName.substring(0,2)"></nz-avatar>
-                  <div>
-                    <div class="font-semibold text-sm text-gray-800 dark:text-gray-200">{{ act.employeeName }}</div>
-                    <div class="text-xs text-gray-400">{{ act.employeeCode }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>{{ act.branchName }}</td>
-              <td class="font-mono font-medium">{{ act.checkInTime | date:'HH:mm:ss' }}</td>
-              <td>
-                @if (act.isLate) {
-                  <nz-tag nzColor="error">Tarde ({{ act.minutesLate }} min)</nz-tag>
-                } @else {
-                  <nz-tag nzColor="success">Puntual</nz-tag>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="4" class="text-center text-gray-400 py-6">Sin marcaciones hoy.</td>
-            </tr>
-          }
-        </tbody>
-      </nz-table>
+      <div class="space-y-4">
+        @for (b of s.branchBreakdown; track b.branchId) {
+        <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
+          <div>
+            <p class="font-semibold text-sm text-gray-800 dark:text-white">{{ b.branchName }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Marcaciones hoy</p>
+          </div>
+          <nz-tag nzColor="processing" class="text-sm px-3 py-0.5 rounded-full font-bold">{{ b.checkInsCount }}</nz-tag>
+        </div>
+        } @empty {
+        <p class="text-sm text-gray-400 text-center py-6">No hay marcaciones aún hoy.</p>
+        }
+      </div>
     </div>
+  </div>
+
+  <!-- Schedule Alerts -->
+  <div class="mt-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+      <span nz-icon nzType="warning" class="text-yellow-500"></span>
+      Alertas de Horarios
+    </h3>
+
+    <nz-table #alertsTable [nzData]="scheduleAlerts()" [nzLoading]="loadingAlerts()" [nzShowPagination]="true"
+      [nzPageSize]="5" nzSize="small">
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th>Última Fecha</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (alert of alertsTable.data; track alert.employeeId) {
+        <tr>
+          <td>
+            <div class="font-semibold text-sm">{{ alert.employeeName }}</div>
+            <div class="text-xs text-gray-500">{{ alert.employeeCode }}</div>
+          </td>
+          <td>
+            @if (alert.lastScheduleDate) {
+            <nz-tag nzColor="warning">Vence: {{ alert.lastScheduleDate | date:'dd/MM/yyyy' }}</nz-tag>
+            } @else {
+            <nz-tag nzColor="error">Sin horario</nz-tag>
+            }
+          </td>
+          <td>
+            <button nz-button nzType="primary" nzSize="small" (click)="generateSchedules(alert.employeeId)">
+              <span nz-icon nzType="sync"></span> Generar 2 meses
+            </button>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="3" class="text-center text-gray-400 py-6">No hay alertas de horarios por vencer.</td>
+        </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+
+  <!-- Recent Activities Table -->
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+      <span nz-icon nzType="history" class="text-indigo-600"></span>
+      Últimas Marcaciones del Día
+    </h3>
+
+    <nz-table #actTable [nzData]="s.recentActivities" [nzShowPagination]="false" nzSize="middle">
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th>Sede</th>
+          <th>Hora de Entrada</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (act of actTable.data; track act.attendanceId) {
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              <nz-avatar [nzSrc]="act.photoUrl || undefined" [nzText]="act.employeeName.substring(0,2)"></nz-avatar>
+              <div>
+                <div class="font-semibold text-sm text-gray-800 dark:text-gray-200">{{ act.employeeName }}</div>
+                <div class="text-xs text-gray-400">{{ act.employeeCode }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ act.branchName }}</td>
+          <td class="font-mono font-medium">{{ act.checkInTime | date:'HH:mm:ss' }}</td>
+          <td>
+            @if (act.isLate) {
+            <nz-tag nzColor="error">Tarde ({{ act.minutesLate }} min)</nz-tag>
+            } @else {
+            <nz-tag nzColor="success">Puntual</nz-tag>
+            }
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="4" class="text-center text-gray-400 py-6">Sin marcaciones hoy.</td>
+        </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
   }
 </div>

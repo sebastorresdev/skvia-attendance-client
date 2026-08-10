@@ -6,43 +6,45 @@ import { Subscription, interval } from 'rxjs';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { KioskService, AttendanceRequest } from '../services/kiosk.service';
+import { KioskDevicesService } from '../../kiosk-devices/services/kiosk-devices.service';
 import { parseApiErrorMessage } from '../../../shared/utils/api-error.util';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-kiosk-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, NzInputModule, NzButtonModule, NzIconModule],
+  imports: [CommonModule, FormsModule, NzInputModule, NzButtonModule, NzIconModule, NzSpinModule],
   providers: [DatePipe],
   templateUrl: './kiosk-page.html',
   styles: [`
     :host {
       display: block;
       height: 100vh;
-      background-color: #f3f4f6;
-    }
-    :host-context(.dark) {
-      background-color: #141414;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
     }
   `]
 })
 export class KioskPage implements OnInit, OnDestroy {
   private _kioskService = inject(KioskService);
+  private _kioskDevicesService = inject(KioskDevicesService);
   private _messageService = inject(NzMessageService);
   private _cdr = inject(ChangeDetectorRef);
   private _router = inject(Router);
   private _route = inject(ActivatedRoute);
-  
+
   currentTime: Date = new Date();
   identifier: string = '';
   isLoading = signal(false);
   isLocked = signal(true);
-  
-  private timeSubscription?: Subscription;
+  isVerifying = signal(true);
+  pairingCode = signal<string | null>(null);
 
-  private _branchId = '';
+  private timeSubscription?: Subscription;
+  private pairingSubscription?: Subscription;
+
+  private _workplaceId = '';
   private _token = '';
 
   ngOnInit() {
@@ -51,19 +53,18 @@ export class KioskPage implements OnInit, OnDestroy {
       this._cdr.markForCheck();
     });
 
-    // Check if URL has token and branchId (Redirect from Admin)
+    // Check if URL has token and workplaceId
     this._route.queryParams.subscribe(params => {
       const urlToken = params['token'];
-      const urlBranchId = params['branchId'];
+      const urlWorkplaceId = params['workplaceId'] || params['branchId'];
 
-      if (urlToken && urlBranchId) {
+      if (urlToken && urlWorkplaceId) {
         localStorage.setItem('kiosk_token', urlToken);
-        localStorage.setItem('kiosk_branch_id', urlBranchId);
-        
-        // Remove query params from URL without reloading
+        localStorage.setItem('kiosk_workplace_id', urlWorkplaceId);
+
         this._router.navigate([], {
           relativeTo: this._route,
-          queryParams: { token: null, branchId: null },
+          queryParams: { token: null, workplaceId: null, branchId: null },
           queryParamsHandling: 'merge'
         });
       }
@@ -73,27 +74,101 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   verifyDeviceStatus() {
+    this.isVerifying.set(true);
     const token = localStorage.getItem('kiosk_token');
-    const branchId = localStorage.getItem('kiosk_branch_id');
 
-    if (token && branchId) {
-      this._token = token;
-      this._branchId = branchId;
-      this.isLocked.set(false);
+    if (token) {
+      this._kioskDevicesService.verifyToken(token).subscribe({
+        next: (res: any) => {
+          const isValid = res?.isValid ?? res?.IsValid;
+          const workplaceId = res?.workplaceId ?? res?.WorkplaceId;
+
+          if (isValid) {
+            this._token = token;
+            this._workplaceId = workplaceId || '';
+            this.isLocked.set(false);
+            this.isVerifying.set(false);
+            this.stopPairingFlow();
+          } else {
+            this.clearDeviceStorage();
+            this.startPairingFlow();
+          }
+          this._cdr.markForCheck();
+        },
+        error: () => {
+          this.clearDeviceStorage();
+          this.startPairingFlow();
+          this._cdr.markForCheck();
+        }
+      });
     } else {
-      this.isLocked.set(true);
+      this.startPairingFlow();
     }
-    this._cdr.markForCheck();
+  }
+
+  clearDeviceStorage() {
+    localStorage.removeItem('kiosk_token');
+    localStorage.removeItem('kiosk_workplace_id');
+    localStorage.removeItem('kiosk_branch_id');
+    this._token = '';
+    this._workplaceId = '';
+  }
+
+  startPairingFlow() {
+    this.isLocked.set(true);
+    this.isVerifying.set(false);
+    this.stopPairingFlow();
+
+    this._kioskDevicesService.generatePairingCode().subscribe({
+      next: (res) => {
+        this.pairingCode.set(res.code);
+        this._cdr.markForCheck();
+
+        this.pairingSubscription = interval(2000).subscribe(() => {
+          const currentCode = this.pairingCode();
+          if (!currentCode) return;
+
+          this._kioskDevicesService.checkPairingStatus(currentCode).subscribe({
+            next: (status: any) => {
+              const isApproved = status?.isApproved ?? status?.IsApproved;
+              const token = status?.token ?? status?.Token;
+              const workplaceId = status?.workplaceId ?? status?.WorkplaceId;
+
+              if (isApproved && token && workplaceId) {
+                localStorage.setItem('kiosk_token', token);
+                localStorage.setItem('kiosk_workplace_id', workplaceId);
+                this._messageService.success('¡Dispositivo vinculado con éxito!');
+                this.stopPairingFlow();
+                this.verifyDeviceStatus();
+              }
+            },
+            error: (err) => {
+              if (err.status === 404) {
+                this.stopPairingFlow();
+                this.startPairingFlow();
+              }
+            }
+          });
+        });
+      },
+      error: () => {
+        this._messageService.error('Error al generar código de vinculación.');
+      }
+    });
+  }
+
+  stopPairingFlow() {
+    if (this.pairingSubscription) {
+      this.pairingSubscription.unsubscribe();
+      this.pairingSubscription = undefined;
+    }
   }
 
   ngOnDestroy() {
     if (this.timeSubscription) {
       this.timeSubscription.unsubscribe();
     }
-  }
-
-  goBack() {
-    this._router.navigate(['/']);
+    this.stopPairingFlow();
   }
 
   appendDigit(digit: string) {
@@ -116,7 +191,6 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   goToAdminLink() {
-    // Generate a callback URL to return here
     const callbackUrl = encodeURIComponent(window.location.origin + '/kiosk');
     this._router.navigateByUrl(`/kiosk-devices/link?callbackUrl=${callbackUrl}`);
   }
@@ -124,16 +198,15 @@ export class KioskPage implements OnInit, OnDestroy {
   buildRequest(): AttendanceRequest {
     return {
       employeeIdentifier: this.identifier,
-      branchId: this._branchId,
-      photoUrl: 'kiosk-photo.jpg', // Simulado MVP
-      source: 0, // Kiosk
+      workplaceId: this._workplaceId,
+      photoUrl: 'kiosk-photo.jpg',
+      source: 0,
       deviceToken: this._token
     };
   }
 
   checkIn() {
     if (this.isLocked()) return;
-    
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
@@ -154,9 +227,78 @@ export class KioskPage implements OnInit, OnDestroy {
       error: (err) => {
         setTimeout(() => {
           this.isLoading.set(false);
-          if (err.status === 401 || err.status === 403) {
-            localStorage.removeItem('kiosk_token');
-            localStorage.removeItem('kiosk_branch_id');
+          if (err.status === 401) {
+            this.clearDeviceStorage();
+            this.verifyDeviceStatus();
+            this._messageService.error('Dispositivo no autorizado o revocado.');
+          } else {
+            this._messageService.error(parseApiErrorMessage(err));
+          }
+          this._cdr.markForCheck();
+        });
+      }
+    });
+  }
+
+  startBreak() {
+    if (this.isLocked()) return;
+    if (!this.identifier.trim()) {
+      this._messageService.warning('Ingresa tu DNI o Código');
+      return;
+    }
+
+    this.isLoading.set(true);
+    const req = this.buildRequest();
+
+    this._kioskService.startBreak(req).subscribe({
+      next: () => {
+        setTimeout(() => {
+          this.isLoading.set(false);
+          this.identifier = '';
+          this._messageService.success('¡Inicio de refrigerio registrado correctamente!');
+          this._cdr.markForCheck();
+        });
+      },
+      error: (err) => {
+        setTimeout(() => {
+          this.isLoading.set(false);
+          if (err.status === 401) {
+            this.clearDeviceStorage();
+            this.verifyDeviceStatus();
+            this._messageService.error('Dispositivo no autorizado o revocado.');
+          } else {
+            this._messageService.error(parseApiErrorMessage(err));
+          }
+          this._cdr.markForCheck();
+        });
+      }
+    });
+  }
+
+  endBreak() {
+    if (this.isLocked()) return;
+    if (!this.identifier.trim()) {
+      this._messageService.warning('Ingresa tu DNI o Código');
+      return;
+    }
+
+    this.isLoading.set(true);
+    const req = this.buildRequest();
+
+    this._kioskService.endBreak(req).subscribe({
+      next: () => {
+        setTimeout(() => {
+          this.isLoading.set(false);
+          this.identifier = '';
+          this._messageService.success('¡Fin de refrigerio registrado correctamente!');
+          this._cdr.markForCheck();
+        });
+      },
+      error: (err) => {
+        setTimeout(() => {
+          this.isLoading.set(false);
+          if (err.status === 401) {
+            this.clearDeviceStorage();
             this.verifyDeviceStatus();
             this._messageService.error('Dispositivo no autorizado o revocado.');
           } else {
@@ -170,7 +312,6 @@ export class KioskPage implements OnInit, OnDestroy {
 
   checkOut() {
     if (this.isLocked()) return;
-    
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
@@ -191,9 +332,8 @@ export class KioskPage implements OnInit, OnDestroy {
       error: (err) => {
         setTimeout(() => {
           this.isLoading.set(false);
-          if (err.status === 401 || err.status === 403) {
-            localStorage.removeItem('kiosk_token');
-            localStorage.removeItem('kiosk_branch_id');
+          if (err.status === 401) {
+            this.clearDeviceStorage();
             this.verifyDeviceStatus();
             this._messageService.error('Dispositivo no autorizado o revocado.');
           } else {

@@ -8,7 +8,6 @@ export enum ScheduleDayType {
 
 export interface DailyScheduleRequest {
   date: string; // yyyy-MM-dd
-  branchId: string;
   startTime?: string | null; // HH:mm:ss
   endTime?: string | null; // HH:mm:ss
   dayType: ScheduleDayType;
@@ -25,8 +24,6 @@ export interface EmployeeScheduleResponse {
   id: string;
   employeeId: string;
   date: string;
-  branchId: string;
-  branchName: string;
   assignedStartTime: string | null;
   assignedEndTime: string | null;
   dayType: ScheduleDayType;

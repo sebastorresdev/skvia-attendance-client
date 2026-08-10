@@ -48,9 +48,11 @@
     <tr>
       <th [(nzChecked)]="checked" [nzIndeterminate]="indeterminate" (nzCheckedChange)="onAllChecked($event)"></th>
       <th>Acciones</th>
-      <th>Nombre</th>
-      <th>Hora Entrada</th>
-      <th>Hora Salida</th>
+      <th>Código</th>
+      <th>Descripción</th>
+      <th>Horario</th>
+      <th>Break</th>
+      <th>Total Horas</th>
     </tr>
   </thead>
   <tbody>
@@ -68,9 +70,20 @@
           </ul>
         </nz-dropdown-menu>
       </td>
-      <td class="font-medium">{{ data.name }}</td>
-      <td>{{ data.defaultStartTime }}</td>
-      <td>{{ data.defaultEndTime }}</td>
+      <td class="font-bold">{{ data.code }}</td>
+      <td class="font-medium">{{ data.description }}</td>
+      <td>
+        <nz-tag [nzColor]="'blue'">
+          {{ data.defaultStartTime | slice:0:5 }} - {{ data.defaultEndTime | slice:0:5 }}
+        </nz-tag>
+      </td>
+      <td>
+        <nz-tag *ngIf="data.hasBreak" [nzColor]="'orange'">
+          {{ data.breakStartTime | slice:0:5 }} - {{ data.breakEndTime | slice:0:5 }}
+        </nz-tag>
+        <span *ngIf="!data.hasBreak" class="text-gray-400">Sin break</span>
+      </td>
+      <td class="font-medium">{{ calculateHours(data) | number:'1.1-2' }} h</td>
     </tr>
     }
   </tbody>

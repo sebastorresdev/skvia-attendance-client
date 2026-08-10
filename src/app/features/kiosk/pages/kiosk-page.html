@@ -1,120 +1,146 @@
-<div class="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden bg-gray-900">
+<div class="relative min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 overflow-x-hidden bg-slate-950 text-white">
 
-  <!-- Dynamic Background Gradient / Image -->
-  <div class="absolute inset-0 z-0">
-    <div
-      class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2569')] bg-cover bg-center opacity-30">
-    </div>
-    <div class="absolute inset-0 bg-linear-to-br from-blue-900/80 via-gray-900/90 to-black/90"></div>
-    <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]"></div>
-    <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px]"></div>
+  <!-- Background Decorative Blurs -->
+  <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[140px]"></div>
+    <div class="absolute bottom-10 right-10 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[120px]"></div>
   </div>
 
-  <!-- Back Button (Floating Top-Left) -->
-  <button nz-button nzType="text" (click)="goBack()"
-    class="absolute top-6 left-6 z-20 flex! items-center gap-2 px-4! py-2! rounded-full! text-gray-300 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md cursor-pointer border border-white/10">
-    <nz-icon nzType="arrow-left" />
-    <span class="font-medium tracking-wide">Volver al Dashboard</span>
-  </button>
-
-  <!-- LOCKED STATE SCREEN -->
-  <div *ngIf="isLocked()"
+  <!-- VERIFYING TOKEN LOADING SCREEN -->
+  <div *ngIf="isVerifying()"
     class="relative z-10 w-full max-w-md p-10 flex flex-col items-center text-center 
-              bg-white/5 backdrop-blur-2xl border border-red-500/30 shadow-[0_8px_32px_0_rgba(255,0,0,0.2)] rounded-[2rem]">
+              bg-slate-900/90 backdrop-blur-2xl border border-slate-800 shadow-2xl rounded-3xl">
+    <nz-spin nzSimple nzSize="large"></nz-spin>
+    <p class="text-slate-300 mt-5 font-semibold text-sm">Verificando autorización del dispositivo...</p>
+  </div>
 
-    <div class="w-20 h-20 mb-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/50">
-      <nz-icon nzType="lock" class="text-4xl text-red-400" />
+  <!-- UNLINKED PIN PAIRING SCREEN -->
+  <div *ngIf="!isVerifying() && isLocked()"
+    class="relative z-10 w-full max-w-lg p-8 sm:p-10 flex flex-col items-center text-center 
+              bg-slate-900/95 backdrop-blur-2xl border border-blue-500/30 shadow-[0_20px_60px_rgba(0,0,0,0.6)] rounded-[2.5rem]">
+
+    <div class="w-20 h-20 mb-5 bg-blue-500/20 rounded-3xl flex items-center justify-center border border-blue-400/40 shadow-inner">
+      <nz-icon nzType="desktop" class="text-4xl text-blue-400" />
     </div>
 
-    <h2 class="text-3xl font-bold text-white mb-2">Dispositivo Bloqueado</h2>
-    <p class="text-gray-400 mb-8 text-sm leading-relaxed">
-      Este dispositivo no ha sido autorizado para registrar asistencias o su acceso ha sido revocado.
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-2">Dispositivo No Vinculado</h2>
+    <p class="text-slate-300 text-sm mb-6 max-w-sm leading-relaxed">
+      Ingresa al sistema web desde el Administrador y autoriza este kiosko usando el siguiente código:
     </p>
 
-    <button nz-button nzType="primary" nzSize="large" (click)="goToAdminLink()"
-      class="w-full h-14 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 border-none shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2">
-      <nz-icon nzType="setting" /> Vincular Dispositivo (Admin)
-    </button>
+    <!-- PIN Display -->
+    <div class="w-full bg-slate-950/80 border border-blue-500/50 rounded-2xl p-6 mb-6 backdrop-blur-md shadow-inner flex flex-col items-center">
+      <span class="text-xs text-blue-400 uppercase tracking-widest font-bold mb-2">Código PIN de Vinculación</span>
+      <div class="text-5xl sm:text-6xl font-mono font-extrabold text-blue-400 tracking-[0.2em] drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
+        {{ pairingCode() || '------' }}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 text-xs text-slate-300 mb-6 bg-slate-800/60 px-5 py-2.5 rounded-full border border-slate-700">
+      <nz-spin nzSimple nzSize="small"></nz-spin>
+      <span>Esperando que el administrador apruebe la vinculación...</span>
+    </div>
+
+    <div class="w-full flex gap-3">
+      <button nz-button nzType="default" (click)="startPairingFlow()" class="flex-1 h-12 rounded-xl font-semibold border-slate-700 text-slate-200 hover:text-white bg-slate-800/80">
+        <nz-icon nzType="reload" /> Nuevo Código
+      </button>
+      <button nz-button nzType="primary" (click)="goToAdminLink()" class="flex-1 h-12 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 border-none shadow-lg shadow-blue-900/40">
+        <nz-icon nzType="setting" /> Vincular desde Admin
+      </button>
+    </div>
   </div>
 
-  <!-- ACTIVE STATE SCREEN -->
-  <div *ngIf="!isLocked()" class="relative z-10 w-full max-w-lg p-10 flex flex-col items-center text-center 
-              bg-white/5 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] rounded-[2rem] 
-              transform transition-all duration-500 hover:shadow-[0_8px_40px_0_rgba(0,0,0,0.4)]">
+  <!-- ACTIVE KIOSK DISPLAY SCREEN (HIGH CONTRAST) -->
+  <div *ngIf="!isVerifying() && !isLocked()" class="relative z-10 w-full max-w-xl p-8 sm:p-10 flex flex-col items-center text-center 
+              bg-slate-900/95 backdrop-blur-2xl border border-slate-800 shadow-[0_25px_70px_rgba(0,0,0,0.7)] rounded-[2.5rem]">
 
     <!-- Logo / Brand Header -->
-    <div class="mb-8 flex flex-col items-center">
-      <div
-        class="w-16 h-16 mb-4 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+    <div class="mb-6 flex flex-col items-center">
+      <div class="w-16 h-16 mb-3 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/40">
+        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white">
           <path d="M12 2L2 7l10 5 10-5-10-5z" />
           <path d="M2 17l10 5 10-5" />
           <path d="M2 12l10 5 10-5" />
         </svg>
       </div>
-      <h2
-        class="text-3xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-300 tracking-tight">
-        Skvia Attendance</h2>
-      <p class="text-gray-400 font-medium tracking-wider text-sm mt-1 uppercase">Portal de Marcaciones</p>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
+        Skvia Attendance
+      </h1>
+      <p class="text-blue-400 font-bold tracking-widest text-xs mt-1 uppercase">Portal de Marcaciones</p>
     </div>
 
     <!-- Live Clock Display -->
-    <div class="mb-10 w-full flex flex-col items-center p-6 bg-black/20 rounded-3xl border border-white/5 shadow-inner">
-      <div
-        class="text-6xl sm:text-7xl font-mono font-bold text-white tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] mb-2">
+    <div class="mb-8 w-full flex flex-col items-center p-5 bg-slate-950/80 rounded-3xl border border-slate-800 shadow-inner">
+      <div class="text-5xl sm:text-6xl font-mono font-extrabold text-white tracking-widest drop-shadow-lg mb-1">
         {{ currentTime | date:'HH:mm:ss' }}
       </div>
-      <div class="text-sm sm:text-base text-blue-200/80 font-medium uppercase tracking-[0.2em]">
+      <div class="text-xs sm:text-sm text-slate-300 font-bold uppercase tracking-[0.2em]">
         {{ currentTime | date:'EEEE, dd MMMM yyyy' }}
       </div>
     </div>
 
     <!-- Input Field -->
-    <div class="w-full mb-6 relative group">
-      <div
-        class="absolute -inset-1 bg-linear-to-r from-blue-500 to-indigo-500 rounded-2xl blur-sm opacity-25 group-focus-within:opacity-50 transition duration-500">
-      </div>
-      <nz-input-group nzSize="large" nzPrefixIcon="user"
-        class="relative rounded-2xl overflow-hidden bg-white/10 border border-white/20 backdrop-blur-md shadow-inner transition-all focus-within:border-blue-400/50">
+    <div class="w-full mb-5">
+      <nz-input-group nzSize="large" [nzPrefix]="prefixUser" class="rounded-2xl overflow-hidden bg-slate-950 border border-slate-700 shadow-inner">
         <input type="text" nz-input placeholder="Ingresa tu DNI o Código" [(ngModel)]="identifier"
-          class="text-center text-xl sm:text-2xl tracking-widest font-semibold text-white placeholder-gray-400 bg-transparent! border-none! py-3! focus:ring-0!"
+          class="text-center text-xl sm:text-2xl tracking-widest font-extrabold text-white placeholder-slate-500 bg-transparent! border-none! py-3! focus:ring-0!"
           (keyup.enter)="checkIn()" autocomplete="off" />
       </nz-input-group>
+      <ng-template #prefixUser>
+        <nz-icon nzType="user" class="text-2xl text-blue-400 ml-2" />
+      </ng-template>
     </div>
 
     <!-- Touch Numeric Keypad -->
     <div class="w-full grid grid-cols-3 gap-2.5 mb-6">
       @for (num of ['1','2','3','4','5','6','7','8','9']; track num) {
       <button type="button" (click)="appendDigit(num)"
-        class="h-12 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xl border border-white/10 transition-all flex items-center justify-center shadow-sm">
+        class="h-13 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-extrabold text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
         {{ num }}
       </button>
       }
       <button type="button" (click)="clearDigit()"
-        class="h-12 rounded-xl bg-gray-700/50 hover:bg-gray-700 text-gray-300 font-semibold text-sm border border-white/10 transition-all flex items-center justify-center">
+        class="h-13 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center">
         BORRAR
       </button>
       <button type="button" (click)="appendDigit('0')"
-        class="h-12 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xl border border-white/10 transition-all flex items-center justify-center shadow-sm">
+        class="h-13 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-extrabold text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
         0
       </button>
       <button type="button" (click)="deleteDigit()"
-        class="h-12 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 font-semibold text-lg border border-red-500/30 transition-all flex items-center justify-center">
+        class="h-13 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 font-bold text-xl border border-rose-800/50 transition-all flex items-center justify-center">
         <nz-icon nzType="backspace" />
       </button>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="w-full flex flex-col sm:flex-row gap-4">
+    <!-- 4 ATTENDANCE CLOCK ACTION BUTTONS -->
+    <div class="w-full grid grid-cols-2 gap-3">
+      <!-- 1. ENTRADA -->
       <button nz-button nzType="primary" nzSize="large"
-        class="flex-1 h-16 text-lg rounded-2xl font-bold bg-linear-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 border-none shadow-lg shadow-green-900/30 transition-transform active:scale-95 flex items-center justify-center gap-2"
+        class="h-14 text-base rounded-2xl font-extrabold bg-emerald-600 hover:bg-emerald-500 border-none shadow-lg shadow-emerald-950/50 transition-transform active:scale-95 flex items-center justify-center gap-2"
         [nzLoading]="isLoading()" (click)="checkIn()">
         <nz-icon nzType="login" class="text-xl" /> ENTRADA
       </button>
 
+      <!-- 2. INICIO REFRIGERIO -->
       <button nz-button nzSize="large"
-        class="flex-1 h-16 text-lg rounded-2xl font-bold bg-white/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-400/60 shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+        class="h-14 text-base rounded-2xl font-extrabold bg-amber-600 hover:bg-amber-500 text-white border-none shadow-lg shadow-amber-950/50 transition-transform active:scale-95 flex items-center justify-center gap-2"
+        [nzLoading]="isLoading()" (click)="startBreak()">
+        <nz-icon nzType="coffee" class="text-xl" /> INICIO REFRIGERIO
+      </button>
+
+      <!-- 3. FIN REFRIGERIO -->
+      <button nz-button nzSize="large"
+        class="h-14 text-base rounded-2xl font-extrabold bg-indigo-600 hover:bg-indigo-500 text-white border-none shadow-lg shadow-indigo-950/50 transition-transform active:scale-95 flex items-center justify-center gap-2"
+        [nzLoading]="isLoading()" (click)="endBreak()">
+        <nz-icon nzType="rest" class="text-xl" /> FIN REFRIGERIO
+      </button>
+
+      <!-- 4. SALIDA -->
+      <button nz-button nzSize="large"
+        class="h-14 text-base rounded-2xl font-extrabold bg-rose-600 hover:bg-rose-500 text-white border-none shadow-lg shadow-rose-950/50 transition-transform active:scale-95 flex items-center justify-center gap-2"
         [nzLoading]="isLoading()" (click)="checkOut()">
         <nz-icon nzType="logout" class="text-xl" /> SALIDA
       </button>
@@ -123,9 +149,8 @@
   </div>
 
   <!-- Footer Help -->
-  <div
-    class="absolute bottom-6 text-gray-500/80 text-xs font-medium tracking-wide flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full border border-white/5 bg-black/20">
-    <nz-icon nzType="info-circle" class="text-blue-400/80" />
-    <span>Si tienes problemas con tu código, contacta a Recursos Humanos.</span>
+  <div class="mt-6 text-slate-400 text-xs font-medium tracking-wide flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-800 bg-slate-900/60">
+    <nz-icon nzType="info-circle" class="text-blue-400" />
+    <span>Si tienes problemas con tu código o marcación, contacta a Recursos Humanos.</span>
   </div>
 </div>

@@ -29,6 +29,7 @@ export const MENU: MenuGroup[] = [
     icon: 'bank',
     children: [
       { label: 'Sedes', link: '/branches', permission: PERMISSIONS.Branches.View },
+      { label: 'Lugares de Marcación', link: '/workplaces', permission: PERMISSIONS.Branches.View },
     ]
   },
   {

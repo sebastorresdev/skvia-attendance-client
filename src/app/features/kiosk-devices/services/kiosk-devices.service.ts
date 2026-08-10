@@ -4,6 +4,25 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { KioskDeviceResponse, AuthorizeDeviceRequest, AuthorizeDeviceResponse } from '../models/kiosk-device.model';
 
+export interface AuthorizePinRequest {
+  code: string;
+  name: string;
+  workplaceId: string;
+}
+
+export interface CheckPairingResponse {
+  isApproved: boolean;
+  token?: string;
+  workplaceId?: string;
+}
+
+export interface VerifyTokenResponse {
+  isValid: boolean;
+  name?: string;
+  workplaceId?: string;
+  workplaceName?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,6 +36,22 @@ export class KioskDevicesService {
 
   authorizeDevice(request: AuthorizeDeviceRequest): Observable<AuthorizeDeviceResponse> {
     return this._http.post<AuthorizeDeviceResponse>(`${this._base}/authorize`, request);
+  }
+
+  generatePairingCode(): Observable<{ code: string }> {
+    return this._http.post<{ code: string }>(`${this._base}/pairing-code`, {});
+  }
+
+  checkPairingStatus(code: string): Observable<CheckPairingResponse> {
+    return this._http.get<CheckPairingResponse>(`${this._base}/check-pairing/${code}`);
+  }
+
+  authorizePin(request: AuthorizePinRequest): Observable<AuthorizeDeviceResponse> {
+    return this._http.post<AuthorizeDeviceResponse>(`${this._base}/authorize-pin`, request);
+  }
+
+  verifyToken(token: string): Observable<VerifyTokenResponse> {
+    return this._http.post<VerifyTokenResponse>(`${this._base}/verify`, { token });
   }
 
   revokeDevice(id: string): Observable<void> {

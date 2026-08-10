@@ -5,7 +5,7 @@ import { environment } from '../../../../environments/environment';
 
 export interface AttendanceRequest {
   employeeIdentifier: string;
-  branchId: string;
+  workplaceId: string;
   photoUrl: string;
   source: number;
   latitude?: number;
@@ -33,6 +33,14 @@ export class KioskService {
 
   checkOut(request: AttendanceRequest): Observable<void> {
     return this._http.post<void>(`${this._base}/check-out`, request);
+  }
+
+  startBreak(request: AttendanceRequest): Observable<void> {
+    return this._http.post<void>(`${this._base}/start-break`, request);
+  }
+
+  endBreak(request: AttendanceRequest): Observable<void> {
+    return this._http.post<void>(`${this._base}/end-break`, request);
   }
 
   getBranches(): Observable<Branch[]> {

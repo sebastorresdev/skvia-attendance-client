@@ -2,25 +2,25 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiProblemDetails } from '../models/api-problem-details';
 
-export function parseApiErrorMessage(err: unknown, defaultMessage = 'Ocurrió un error inesperado.'): string {
-  if (!(err instanceof HttpErrorResponse) || !err.error) {
-    return defaultMessage;
-  }
-
-  const problemDetails = err.error as ApiProblemDetails;
+export function parseApiErrorMessage(err: any, defaultMessage = 'Ocurrió un error inesperado.'): string {
+  const errorObj = err?.error || err;
 
   // 1. Extrae el primer error de validación
-  if (problemDetails.errors && Object.keys(problemDetails.errors).length > 0) {
-    const firstKey = Object.keys(problemDetails.errors)[0];
-    const messages = problemDetails.errors[firstKey];
-    if (messages && messages.length > 0) {
+  if (errorObj?.errors && typeof errorObj.errors === 'object' && Object.keys(errorObj.errors).length > 0) {
+    const firstKey = Object.keys(errorObj.errors)[0];
+    const messages = errorObj.errors[firstKey];
+    if (Array.isArray(messages) && messages.length > 0) {
       return messages[0];
     }
   }
 
   // 2. Extrae el detalle general
-  if (problemDetails.detail) {
-    return problemDetails.detail;
+  if (errorObj?.detail) {
+    return errorObj.detail;
+  }
+  
+  if (err?.message) {
+      return err.message;
   }
 
   return defaultMessage;

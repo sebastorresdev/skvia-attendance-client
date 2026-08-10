@@ -10,7 +10,7 @@ export interface EmployeeResponse {
   email?: string;
   phone?: string;
   position?: string;
-  department?: string;
+  departmentId?: string;
   photoUrl?: string;
   mainBranchId?: string;
   mainBranchName?: string;

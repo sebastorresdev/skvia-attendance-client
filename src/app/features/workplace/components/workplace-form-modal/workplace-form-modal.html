@@ -1,0 +1,135 @@
+<form nz-form [formGroup]="form" (ngSubmit)="submitForm()" nzLayout="vertical">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+    <!-- Código -->
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Código</nz-form-label>
+      <nz-form-control nzErrorTip="Por favor ingrese un código válido (Máx. 20 car.)">
+        <input nz-input formControlName="code" placeholder="Ej: WP_01" class="uppercase" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <!-- Nombre -->
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Nombre del Lugar</nz-form-label>
+      <nz-form-control nzErrorTip="Por favor ingrese el nombre del lugar de marcación">
+        <input nz-input formControlName="name" placeholder="Ej: Módulo Venta San Miguel" />
+      </nz-form-control>
+    </nz-form-item>
+  </div>
+
+  <!-- Dirección -->
+  <nz-form-item>
+    <nz-form-label>Dirección Física (Opcional)</nz-form-label>
+    <nz-form-control>
+      <input nz-input formControlName="address" placeholder="Ej: Av. La Marina 2000, San Miguel" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-divider class="my-3!" nzText="Ubicación GPS & Geocerca de Marcación"></nz-divider>
+
+  <!-- Toggle Checkbox & GPS Capture Button -->
+  <div
+    class="mb-3 bg-blue-50/60 dark:bg-blue-950/40 p-3.5 rounded-xl border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex-1">
+      <label nz-checkbox formControlName="enableGeofence" class="font-bold text-gray-900 dark:text-white text-sm">
+        Restringir marcación por Geocerca GPS (Distancia obligatoria)
+      </label>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+        Si no se activa, los empleados podrán registrar su asistencia en este lugar desde cualquier ubicación.
+      </p>
+    </div>
+
+    @if (form.get('enableGeofence')?.value) {
+    <button nz-button type="button" nzType="primary" (click)="getCurrentLocation()" [nzLoading]="gettingLocation()"
+      class="bg-blue-600 hover:bg-blue-500 text-white font-semibold flex items-center justify-center gap-2 px-4 py-2 h-10 rounded-xl shadow-sm shrink-0 border-none">
+      <nz-icon nzType="environment" class="text-base" />
+      <span>Capturar Mi Ubicación Actual</span>
+    </button>
+    }
+  </div>
+
+  <!-- GEOFENCE CONFIGURATION BLOCK -->
+  @if (form.get('enableGeofence')?.value) {
+  <!-- Search Address Bar -->
+  <div class="mb-3 flex gap-2">
+    <input nz-input #addressSearchInput
+      placeholder="Escribe una dirección (Ej: Av. Javier Prado Este 1500, San Isidro)..."
+      (keyup.enter)="searchAddress(addressSearchInput.value)" class="flex-1" />
+    <button nz-button nzType="primary" type="button" (click)="searchAddress(addressSearchInput.value)"
+      [nzLoading]="searchingAddress()" class="flex items-center gap-1.5 font-medium px-4 shrink-0">
+      <nz-icon nzType="search" /> Buscar en Mapa
+    </button>
+  </div>
+
+  <!-- Interactive Leaflet Map -->
+  <div class="w-full mb-3">
+    <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+      <span>📍 Haz clic en el mapa o arrastra el marcador para fijar la ubicación exacta del lugar:</span>
+    </div>
+    <div id="workplace-map" class="w-full h-56 rounded-xl border border-gray-300 dark:border-gray-700 shadow-inner z-0">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+    <!-- Latitud -->
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Latitud GPS</nz-form-label>
+      <nz-form-control nzErrorTip="Ingrese la latitud">
+        <input nz-input type="number" step="0.000001" formControlName="latitude" placeholder="-12.046374"
+          class="w-full! font-mono text-sm" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <!-- Longitud -->
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Longitud GPS</nz-form-label>
+      <nz-form-control nzErrorTip="Ingrese la longitud">
+        <input nz-input type="number" step="0.000001" formControlName="longitude" placeholder="-77.042793"
+          class="w-full! font-mono text-sm" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <!-- Radio Geocerca Dropdown -->
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Radio Geocerca (Metros)</nz-form-label>
+      <nz-form-control nzErrorTip="Seleccione un radio de distancia">
+        <nz-select formControlName="geofenceRadiusMeters" class="w-full">
+          <nz-option [nzValue]="50" nzLabel="50m (Alta precisión / Oficina)"></nz-option>
+          <nz-option [nzValue]="100" nzLabel="100m (Estándar / Módulo)"></nz-option>
+          <nz-option [nzValue]="200" nzLabel="200m (Amplio / Sede)"></nz-option>
+          <nz-option [nzValue]="500" nzLabel="500m (Zona Industrial / Predio)"></nz-option>
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+  </div>
+  }
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start mt-2">
+    <!-- Zona Horaria -->
+    <nz-form-item class="mb-0">
+      <nz-form-label nzRequired>Zona Horaria</nz-form-label>
+      <nz-form-control>
+        <input nz-input formControlName="timeZoneId" placeholder="America/Lima" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <!-- Requiere Foto Móvil -->
+    <nz-form-item class="mb-0 flex flex-col justify-center">
+      <nz-form-label>Exigir Foto en Marcación Móvil</nz-form-label>
+      <nz-form-control>
+        <nz-switch formControlName="requirePhotoForMobile"></nz-switch>
+        <span class="ml-2 text-xs text-gray-500">
+          {{ form.get('requirePhotoForMobile')?.value ? 'Sí (Obligatorio selfie)' : 'No (Sin foto)' }}
+        </span>
+      </nz-form-control>
+    </nz-form-item>
+  </div>
+
+  <!-- Botones de Acción -->
+  <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-gray-100 dark:border-gray-700">
+    <button nz-button type="button" (click)="destroyModal()">Cancelar</button>
+    <button nz-button nzType="primary" type="submit" [nzLoading]="loading()">
+      {{ isEdit ? 'Guardar Cambios' : 'Crear Lugar' }}
+    </button>
+  </div>
+</form>

@@ -46,7 +46,7 @@ export class ScheduleList implements OnInit {
     const term = this.search().toLowerCase().trim();
     if (!term) return this.allSchedules();
     return this.allSchedules().filter(r => 
-      r.name.toLowerCase().includes(term)
+      r.description.toLowerCase().includes(term) || r.code.toLowerCase().includes(term)
     );
   });
 
@@ -95,14 +95,14 @@ export class ScheduleList implements OnInit {
 
   showDeleteConfirm(schedule: ScheduleResponse): void {
     this._modalService.confirm({
-      nzTitle: `¿Estás seguro de que quieres eliminar el turno '${schedule.name}'?`,
+      nzTitle: `¿Estás seguro de que quieres eliminar el turno '${schedule.code} - ${schedule.description}'?`,
       nzOkText: 'Confirmar',
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
         this._scheduleService.delete(schedule.id).subscribe({
           next: () => {
-            this._messageService.success(`Turno '${schedule.name}' eliminado`);
+            this._messageService.success(`Turno '${schedule.code}' eliminado`);
             this.loadSchedules();
           },
           error: (err: any) => {
@@ -172,5 +172,29 @@ export class ScheduleList implements OnInit {
     const data = this.filteredSchedules();
     this.checked = data.length > 0 && data.every(item => this.setOfCheckedId.has(item.id));
     this.indeterminate = data.some(item => this.setOfCheckedId.has(item.id)) && !this.checked;
+  }
+
+  calculateHours(schedule: ScheduleResponse): number {
+    const parse = (time: string) => {
+      const [h, m] = time.split(':').map(Number);
+      return h + m / 60;
+    };
+    
+    let end = parse(schedule.defaultEndTime);
+    let start = parse(schedule.defaultStartTime);
+    
+    // Si cruza la medianoche (ej: 22:00 a 06:00)
+    if (end < start) end += 24;
+    
+    let total = end - start;
+
+    if (schedule.hasBreak && schedule.breakStartTime && schedule.breakEndTime) {
+      let bEnd = parse(schedule.breakEndTime);
+      let bStart = parse(schedule.breakStartTime);
+      if (bEnd < bStart) bEnd += 24;
+      total -= (bEnd - bStart);
+    }
+    
+    return total;
   }
 }

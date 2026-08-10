@@ -1,0 +1,107 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <nz-icon nzType="environment" class="text-indigo-600 dark:text-indigo-400" />
+        Lugares de Marcación
+      </h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        Gestiona las sedes, módulos de venta o lugares físicos/virtuales con geocerca para marcaciones de asistencia.
+      </p>
+    </div>
+
+    <button nz-button nzType="primary" (click)="openNewWorkplaceModal()" class="flex items-center gap-2">
+      <nz-icon nzType="plus" />
+      Nuevo Lugar
+    </button>
+  </div>
+
+  <!-- Search Card -->
+  <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-6 flex items-center justify-between">
+    <nz-input-group [nzPrefix]="prefixTemplate" class="max-w-md">
+      <input nz-input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Buscar por código, nombre o dirección..." />
+    </nz-input-group>
+    <ng-template #prefixTemplate>
+      <nz-icon nzType="search" class="text-gray-400" />
+    </ng-template>
+
+    <div class="text-xs text-gray-400 font-medium">
+      Total registrados: <span class="font-bold text-gray-700 dark:text-gray-200">{{ filteredWorkplaces().length }}</span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+    <nz-table #table [nzData]="filteredWorkplaces()" [nzLoading]="isLoading()" [nzPageSize]="10" nzSize="middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Lugar / Nombre</th>
+          <th>Dirección</th>
+          <th>Coordenadas GPS</th>
+          <th>Geocerca (Radio)</th>
+          <th>Requiere Foto</th>
+          <th class="text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of table.data; track item.id) {
+          <tr>
+            <td>
+              <nz-tag nzColor="blue" class="font-mono font-bold">{{ item.code }}</nz-tag>
+            </td>
+            <td>
+              <div class="font-semibold text-gray-800 dark:text-gray-200">{{ item.name }}</div>
+              <div class="text-xs text-gray-400">TZ: {{ item.timeZoneId }}</div>
+            </td>
+            <td class="text-sm text-gray-600 dark:text-gray-300">
+              {{ item.address || 'Sin dirección registrada' }}
+            </td>
+            <td>
+              @if (item.latitude !== null && item.longitude !== null) {
+                <div class="text-xs font-mono bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded border border-gray-200 dark:border-gray-600 inline-block">
+                  {{ item.latitude }}, {{ item.longitude }}
+                </div>
+              } @else {
+                <span class="text-xs text-gray-400 font-medium">Sin Geocerca (Libre)</span>
+              }
+            </td>
+            <td>
+              <nz-tag nzColor="cyan" class="font-semibold">
+                <nz-icon nzType="radar" /> {{ item.geofenceRadiusMeters }}m
+              </nz-tag>
+            </td>
+            <td>
+              @if (item.requirePhotoForMobile) {
+                <nz-tag nzColor="success">Sí (Selfie)</nz-tag>
+              } @else {
+                <nz-tag nzColor="default">No</nz-tag>
+              }
+            </td>
+            <td class="text-right">
+              <div class="flex items-center justify-end gap-2">
+                <button nz-button nzType="text" nzSize="small" (click)="openEditWorkplaceModal(item)" title="Editar">
+                  <nz-icon nzType="edit" class="text-indigo-600 dark:text-indigo-400" />
+                </button>
+                <button nz-button nzType="text" nzDanger nzSize="small"
+                  nz-popconfirm
+                  nzPopconfirmTitle="¿Estás seguro de eliminar este lugar de marcación?"
+                  (nzOnConfirm)="deleteWorkplace(item)" title="Eliminar">
+                  <nz-icon nzType="delete" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="text-center py-8 text-gray-400">
+              <nz-icon nzType="inbox" class="text-3xl block mb-2" />
+              No se encontraron lugares de marcación.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>

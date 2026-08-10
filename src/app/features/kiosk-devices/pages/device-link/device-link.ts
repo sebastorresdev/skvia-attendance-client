@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -12,9 +12,10 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { KioskDevicesService } from '../../services/kiosk-devices.service';
-import { BranchService } from '../../../branch/services/branch-service';
-import { BranchResponse } from '../../../branch/models/branch-response';
+import { WorkplaceService, WorkplaceResponse } from '../../../workplace/services/workplace.service';
+import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
 
 @Component({
   selector: 'app-device-link',
@@ -22,6 +23,7 @@ import { BranchResponse } from '../../../branch/models/branch-response';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     RouterModule,
     NzFormModule,
     NzInputModule,
@@ -31,54 +33,64 @@ import { BranchResponse } from '../../../branch/models/branch-response';
     NzIconModule,
     NzBreadCrumbModule,
     NzDividerModule,
-    NzModalModule
+    NzModalModule,
+    NzRadioModule
   ],
   templateUrl: './device-link.html'
 })
 export class DeviceLink implements OnInit {
   private _fb = inject(FormBuilder);
   private _kioskDevicesService = inject(KioskDevicesService);
-  private _branchService = inject(BranchService);
+  private _workplaceService = inject(WorkplaceService);
   private _messageService = inject(NzMessageService);
   private _modalService = inject(NzModalService);
   private _router = inject(Router);
   private _route = inject(ActivatedRoute);
 
+  pairingMethod = 'pin'; // 'pin' | 'link'
+
   form = this._fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
-    branchId: ['', Validators.required]
+    workplaceId: ['', Validators.required],
+    pairingCode: ['']
   });
 
-  branches = signal<BranchResponse[]>([]);
-  isLoadingBranches = signal(true);
+  workplaces = signal<WorkplaceResponse[]>([]);
+  isLoadingWorkplaces = signal(true);
   isSubmitting = signal(false);
 
   private _callbackUrl: string | null = null;
 
   ngOnInit() {
-    this.loadBranches();
+    this.loadWorkplaces();
     this._route.queryParams.subscribe(params => {
       if (params['callbackUrl']) {
         this._callbackUrl = params['callbackUrl'];
+        this.pairingMethod = 'link';
       }
     });
   }
 
-  loadBranches() {
-    this.isLoadingBranches.set(true);
-    this._branchService.getAll().subscribe({
+  loadWorkplaces() {
+    this.isLoadingWorkplaces.set(true);
+    this._workplaceService.getAll().subscribe({
       next: (data) => {
-        this.branches.set(data);
-        this.isLoadingBranches.set(false);
+        this.workplaces.set(data);
+        this.isLoadingWorkplaces.set(false);
       },
       error: () => {
-        this._messageService.error('Error al cargar sedes');
-        this.isLoadingBranches.set(false);
+        this._messageService.error('Error al cargar lugares de marcación');
+        this.isLoadingWorkplaces.set(false);
       }
     });
   }
 
   submitForm() {
+    if (this.pairingMethod === 'pin' && !this.form.value.pairingCode?.trim()) {
+      this._messageService.warning('Por favor ingrese el Código PIN de 6 dígitos que muestra la pantalla remota.');
+      return;
+    }
+
     if (this.form.invalid) {
       Object.values(this.form.controls).forEach(control => {
         if (control.invalid) {
@@ -92,31 +104,51 @@ export class DeviceLink implements OnInit {
     this.isSubmitting.set(true);
     const formValue = this.form.getRawValue();
 
-    this._kioskDevicesService.authorizeDevice({
-      name: formValue.name,
-      branchId: formValue.branchId
-    }).subscribe({
-      next: (res) => {
-        this._messageService.success('Dispositivo autorizado correctamente');
-        
-        if (this._callbackUrl) {
-          // Si vino desde el kiosko, redirige de vuelta enviando el token
-          window.location.href = `${this._callbackUrl}?token=${encodeURIComponent(res.token)}&branchId=${formValue.branchId}`;
-        } else {
-          const generatedUrl = `${window.location.origin}/kiosk?token=${encodeURIComponent(res.token)}&branchId=${formValue.branchId}`;
-          this._modalService.success({
-            nzTitle: 'Dispositivo Vinculado',
-            nzContent: `<p>Copia el siguiente enlace y ábrelo en el dispositivo que deseas utilizar como kiosko:</p><br><a href="${generatedUrl}" target="_blank" style="word-break: break-all;">${generatedUrl}</a>`,
-            nzOnOk: () => this._router.navigate(['/kiosk-devices']),
-            nzCancelText: null,
-            nzMaskClosable: false
-          });
+    if (this.pairingMethod === 'pin' && formValue.pairingCode) {
+      // Autorización mediante PIN de 6 dígitos
+      this._kioskDevicesService.authorizePin({
+        code: formValue.pairingCode.trim(),
+        name: formValue.name,
+        workplaceId: formValue.workplaceId
+      }).subscribe({
+        next: () => {
+          this._messageService.success('¡Dispositivo remoto autorizado con éxito! La pantalla remota ingresará en breve.');
+          this.isSubmitting.set(false);
+          this._router.navigate(['/kiosk-devices']);
+        },
+        error: (err) => {
+          this._messageService.error(parseApiErrorMessage(err));
+          this.isSubmitting.set(false);
         }
-      },
-      error: () => {
-        this._messageService.error('Error al autorizar dispositivo');
-        this.isSubmitting.set(false);
-      }
-    });
+      });
+    } else {
+      // Generación de Enlace / Token directo
+      this._kioskDevicesService.authorizeDevice({
+        name: formValue.name,
+        workplaceId: formValue.workplaceId
+      }).subscribe({
+        next: (res) => {
+          this._messageService.success('Dispositivo autorizado correctamente');
+          this.isSubmitting.set(false);
+
+          if (this._callbackUrl) {
+            window.location.href = `${this._callbackUrl}?token=${encodeURIComponent(res.token)}&workplaceId=${formValue.workplaceId}`;
+          } else {
+            const generatedUrl = `${window.location.origin}/kiosk?token=${encodeURIComponent(res.token)}&workplaceId=${formValue.workplaceId}`;
+            this._modalService.success({
+              nzTitle: 'Dispositivo Vinculado',
+              nzContent: `<p>Copia el siguiente enlace y ábrelo en el dispositivo que deseas utilizar como kiosko:</p><br><a href="${generatedUrl}" target="_blank" style="word-break: break-all;">${generatedUrl}</a>`,
+              nzOnOk: () => this._router.navigate(['/kiosk-devices']),
+              nzCancelText: null,
+              nzMaskClosable: false
+            });
+          }
+        },
+        error: (err) => {
+          this._messageService.error(parseApiErrorMessage(err));
+          this.isSubmitting.set(false);
+        }
+      });
+    }
   }
 }

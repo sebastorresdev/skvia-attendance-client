@@ -1,18 +1,33 @@
 export interface ScheduleResponse {
   id: string;
-  name: string;
+  code: string;
+  description: string;
+  timeZoneId: string;
+  hasBreak: boolean;
+  breakStartTime: string | null;
+  breakEndTime: string | null;
   defaultStartTime: string;
   defaultEndTime: string;
 }
 
 export interface CreateScheduleRequest {
-  name: string;
+  code: string;
+  description: string;
+  timeZoneId: string;
   defaultStartTime: string;
   defaultEndTime: string;
+  hasBreak: boolean;
+  breakStartTime: string | null;
+  breakEndTime: string | null;
 }
 
 export interface UpdateScheduleRequest {
-  name: string;
+  code: string;
+  description: string;
+  timeZoneId: string;
   defaultStartTime: string;
   defaultEndTime: string;
+  hasBreak: boolean;
+  breakStartTime: string | null;
+  breakEndTime: string | null;
 }

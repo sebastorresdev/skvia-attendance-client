@@ -58,6 +58,12 @@ export const routes: Routes = [
       },
 
       {
+        path: 'workplaces',
+        canActivate: [permissionGuard(PERMISSIONS.Branches.View)],
+        loadComponent: () => import('./features/workplace/pages/workplace-list/workplace-list').then(m => m.WorkplaceList)
+      },
+
+      {
         path: 'employees',
         canActivate: [permissionGuard(PERMISSIONS.Employees.View)],
         children: [

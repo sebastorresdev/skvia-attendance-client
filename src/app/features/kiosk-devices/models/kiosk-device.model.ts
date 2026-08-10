@@ -1,15 +1,15 @@
 export interface KioskDeviceResponse {
   id: string;
   name: string;
-  branchId: string;
-  branchName: string;
+  workplaceId: string;
+  workplaceName: string;
   isActive: boolean;
   createdAt: string;
 }
 
 export interface AuthorizeDeviceRequest {
   name: string;
-  branchId: string;
+  workplaceId: string;
 }
 
 export interface AuthorizeDeviceResponse {

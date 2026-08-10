@@ -2,8 +2,10 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable, Observer, Subscription, of, switchMap, catchError, map, finalize } from 'rxjs';
 
 // NG-ZORRO
+import { NzUploadModule, NzUploadFile, NzUploadXHRArgs } from 'ng-zorro-antd/upload';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -18,6 +20,7 @@ import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
 
 import { EmployeeService } from '../../services/employee-service';
 import { BranchService } from '../../../branch/services/branch-service';
@@ -29,6 +32,9 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { UserService } from '../../../user/services/user-service';
 import { UserResponse } from '../../../user/models/user-response';
+import { DepartmentService } from '../../../department/services/department-service';
+import { DepartmentResponse } from '../../../department/models/department-response';
+import { WorkplaceService, WorkplaceResponse } from '../../../workplace/services/workplace.service';
 
 @Component({
   selector: 'app-employee-form',
@@ -51,6 +57,8 @@ import { UserResponse } from '../../../user/models/user-response';
     NzSwitchModule,
     NzCheckboxModule,
     NzTimePickerModule,
+    NzTabsModule,
+    NzUploadModule,
     RouterLink
   ],
   templateUrl: './employee-form.html'
@@ -65,6 +73,8 @@ export class EmployeeForm implements OnInit {
 
   private _branchService = inject(BranchService);
   private _userService = inject(UserService);
+  private _departmentService = inject(DepartmentService);
+  private _workplaceService = inject(WorkplaceService);
 
   form!: FormGroup;
   isEdit = false;
@@ -73,6 +83,14 @@ export class EmployeeForm implements OnInit {
   initialLoading = signal(false);
   branches = signal<BranchResponse[]>([]);
   users = signal<UserResponse[]>([]);
+  departments = signal<DepartmentResponse[]>([]);
+  workplaces = signal<WorkplaceResponse[]>([]);
+
+  // Avatar states
+  uploadingPhoto = signal<boolean>(false);
+  avatarUrl = signal<string | undefined>(undefined);
+  avatarChanged = signal<boolean>(false);
+  private avatarFile = signal<File | null>(null);
 
   // Enums for template
   documentTypes = [
@@ -85,6 +103,8 @@ export class EmployeeForm implements OnInit {
     this.initForm();
     this.loadBranches();
     this.loadUsers();
+    this.loadDepartments();
+    this.loadWorkplaces();
     
     this.employeeId = this._route.snapshot.paramMap.get('id');
     if (this.employeeId) {
@@ -107,6 +127,20 @@ export class EmployeeForm implements OnInit {
     });
   }
 
+  private loadWorkplaces(): void {
+    this._workplaceService.getAll().subscribe({
+      next: (data) => this.workplaces.set(data),
+      error: () => this._messageService.error('Error al cargar lugares de marcación')
+    });
+  }
+
+  private loadDepartments(): void {
+    this._departmentService.getAll().subscribe({
+      next: (data) => this.departments.set(data),
+      error: () => this._messageService.error('Error al cargar departamentos')
+    });
+  }
+
   private initForm(): void {
     this.form = this._fb.group({
       code: ['', [Validators.required, Validators.maxLength(10)]],
@@ -118,14 +152,15 @@ export class EmployeeForm implements OnInit {
       email: ['', [Validators.email, Validators.maxLength(250)]],
       phone: ['', [Validators.maxLength(20)]],
       position: ['', [Validators.maxLength(100)]],
-      department: ['', [Validators.maxLength(100)]],
+      departmentId: [null],
       photoUrl: ['', [Validators.maxLength(500)]],
       mainBranchId: [null],
       mobileCheckInEnabled: [false],
       applicationUserId: [null],
       requireFourPointAttendance: [false],
       isAttendanceTracked: [true],
-      autoCompleteClockOut: [false]
+      autoCompleteClockOut: [false],
+      allowedWorkplaceIds: [[]]
     });
 
     this.form.get('mobileCheckInEnabled')?.valueChanges.subscribe(enabled => {
@@ -136,6 +171,16 @@ export class EmployeeForm implements OnInit {
         userCtrl?.clearValidators();
       }
       userCtrl?.updateValueAndValidity();
+    });
+
+    this.form.get('isAttendanceTracked')?.valueChanges.subscribe(tracked => {
+      const mobileCtrl = this.form.get('mobileCheckInEnabled');
+      if (!tracked) {
+        mobileCtrl?.setValue(false);
+        mobileCtrl?.disable();
+      } else {
+        mobileCtrl?.enable();
+      }
     });
   }
 
@@ -154,15 +199,23 @@ export class EmployeeForm implements OnInit {
           email: emp.email,
           phone: emp.phone,
           position: emp.position,
-          department: emp.department,
+          departmentId: emp.departmentId,
           photoUrl: emp.photoUrl,
           mainBranchId: emp.mainBranchId || null,
           mobileCheckInEnabled: (emp as any).mobileCheckInEnabled || false,
           applicationUserId: (emp as any).applicationUserId || null,
           requireFourPointAttendance: emp.requireFourPointAttendance || false,
           isAttendanceTracked: emp.isAttendanceTracked ?? true,
-          autoCompleteClockOut: emp.autoCompleteClockOut || false
+          autoCompleteClockOut: emp.autoCompleteClockOut || false,
+          allowedWorkplaceIds: (emp as any).allowedWorkplaceIds || []
         });
+        
+        // Trigger manual check on load just in case it's false in DB
+        if (emp.isAttendanceTracked === false) {
+          this.form.get('mobileCheckInEnabled')?.disable();
+        }
+        
+        this.avatarUrl.set(emp.photoUrl ?? undefined);
         this.initialLoading.set(false);
       },
       error: (err) => {
@@ -175,6 +228,93 @@ export class EmployeeForm implements OnInit {
 
   goBack(): void {
     this._location.back();
+  }
+
+  // ---------- Avatar ----------
+
+  readonly beforeUpload = (file: NzUploadFile): Observable<boolean> => {
+    return new Observable((observer: Observer<boolean>) => {
+      const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+      if (!isJpgOrPng) {
+        this._messageService.error('Solo puedes subir archivos JPG o PNG.');
+        observer.next(false);
+        observer.complete();
+        return;
+      }
+
+      const isLt2M = (file.size ?? 0) / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        this._messageService.error('La imagen debe pesar menos de 2MB.');
+        observer.next(false);
+        observer.complete();
+        return;
+      }
+
+      observer.next(true);
+      observer.complete();
+    });
+  };
+
+  handleChange(info: { file: NzUploadFile }): void {
+    switch (info.file.status) {
+      case 'uploading':
+        this.uploadingPhoto.set(true);
+        break;
+      case 'done':
+      case 'success':
+        if (info.file.originFileObj) {
+          this.avatarFile.set(info.file.originFileObj as unknown as File);
+          this.avatarChanged.set(true);
+
+          this._getBase64(info.file.originFileObj as unknown as File, (img: string) => {
+            this.uploadingPhoto.set(false);
+            this.avatarUrl.set(img);
+          });
+        } else {
+          this.uploadingPhoto.set(false);
+        }
+        break;
+      case 'error':
+        this._messageService.error('Error al cargar la imagen.');
+        this.uploadingPhoto.set(false);
+        break;
+    }
+  }
+
+  readonly customUpload = (item: NzUploadXHRArgs): Subscription => {
+    setTimeout(() => {
+      if (item.file) {
+        item.onSuccess?.({}, item.file, null);
+      }
+    }, 0);
+    return new Subscription();
+  };
+
+  removeAvatar(event: Event): void {
+    event.stopPropagation();
+    this.avatarUrl.set(undefined);
+    this.avatarFile.set(null);
+  }
+
+  private _getBase64(file: File, callback: (img: string) => void): void {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => callback(reader.result?.toString() ?? ''));
+    reader.readAsDataURL(file);
+  }
+
+  private uploadPhotoIfNeeded$(): Observable<string | null> {
+    const file = this.avatarFile();
+
+    if (!file || !this.avatarChanged()) {
+      return of(this.avatarUrl() ?? null);
+    }
+
+    return this._employeeService.uploadPhoto(file).pipe(
+      switchMap((res: { url: string }) => {
+        this.avatarChanged.set(false);
+        return of(res.url);
+      }),
+    );
   }
 
   submitForm(): void {
@@ -190,44 +330,47 @@ export class EmployeeForm implements OnInit {
     }
 
     this.loading.set(true);
-    const val = this.form.value;
 
-    const request = {
-      code: val.code.trim().toUpperCase(),
-      firstName: val.firstName.trim(),
-      lastName: val.lastName.trim(),
-      documentType: val.documentType,
-      documentNumber: val.documentNumber.trim(),
-      hireDate: val.hireDate ? val.hireDate.toISOString() : null,
-      email: val.email ? val.email.trim() : null,
-      phone: val.phone ? val.phone.trim() : null,
-      position: val.position ? val.position.trim() : null,
-      department: val.department ? val.department.trim() : null,
-      photoUrl: val.photoUrl ? val.photoUrl.trim() : null,
-      mainBranchId: val.mainBranchId || null,
-      mobileCheckInEnabled: val.mobileCheckInEnabled,
-      applicationUserId: val.applicationUserId || null,
-      requireFourPointAttendance: val.requireFourPointAttendance,
-      isAttendanceTracked: val.isAttendanceTracked,
-      autoCompleteClockOut: val.autoCompleteClockOut,
-      allowedKioskIds: [] // Currently kiosks will be a future implementation on this form, or maybe wait
-    };
+    this.uploadPhotoIfNeeded$().pipe(
+      switchMap((uploadedUrl) => {
+        const val = this.form.getRawValue();
 
-    const obs$ = this.isEdit 
-      ? this._employeeService.update(this.employeeId!, request)
-      : this._employeeService.create(request);
+        const request = {
+          code: val.code.trim().toUpperCase(),
+          firstName: val.firstName.trim(),
+          lastName: val.lastName.trim(),
+          documentType: val.documentType,
+          documentNumber: val.documentNumber.trim(),
+          hireDate: val.hireDate ? val.hireDate.toISOString() : null,
+          email: val.email ? val.email.trim() : null,
+          phone: val.phone ? val.phone.trim() : null,
+          position: val.position ? val.position.trim() : null,
+          departmentId: val.departmentId || null,
+          photoUrl: uploadedUrl ?? undefined,
+          mainBranchId: val.mainBranchId || null,
+          mobileCheckInEnabled: val.mobileCheckInEnabled,
+          applicationUserId: val.applicationUserId || null,
+          requireFourPointAttendance: val.requireFourPointAttendance,
+          isAttendanceTracked: val.isAttendanceTracked,
+          autoCompleteClockOut: val.autoCompleteClockOut,
+          allowedWorkplaceIds: val.allowedWorkplaceIds || []
+        };
 
-    obs$.subscribe({
+        return this.isEdit 
+          ? this._employeeService.update(this.employeeId!, request)
+          : this._employeeService.create(request);
+      }),
+      finalize(() => this.loading.set(false))
+    ).subscribe({
       next: () => {
         this._messageService.success(`Empleado ${this.isEdit ? 'actualizado' : 'creado'} con éxito`);
-        this.loading.set(false);
         this.goBack();
       },
       error: (err) => {
-        this.loading.set(false);
         const msg = parseApiErrorMessage(err);
         this._messageService.error(msg);
       }
     });
   }
+
 }
