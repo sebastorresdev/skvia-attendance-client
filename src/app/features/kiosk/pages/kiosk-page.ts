@@ -39,13 +39,22 @@ export class KioskPage implements OnInit, OnDestroy {
   isLoading = signal(false);
   isLocked = signal(true);
   isVerifying = signal(true);
-  pairingCode = signal<string | null>(null);
+  isDisabled = signal(false);
+  disabledDeviceName = signal('');
+
+  // OTP 6-Digit Box state
+  otpDigits = signal<string[]>(['', '', '', '', '', '']);
+  isSubmittingCode = signal(false);
 
   private timeSubscription?: Subscription;
-  private pairingSubscription?: Subscription;
+  private heartbeatSubscription?: Subscription;
 
   private _workplaceId = '';
   private _token = '';
+
+  get pairingInputCode(): string {
+    return this.otpDigits().join('');
+  }
 
   ngOnInit() {
     this.timeSubscription = interval(1000).subscribe(() => {
@@ -81,28 +90,92 @@ export class KioskPage implements OnInit, OnDestroy {
       this._kioskDevicesService.verifyToken(token).subscribe({
         next: (res: any) => {
           const isValid = res?.isValid ?? res?.IsValid;
+          const status = res?.status ?? res?.Status;
           const workplaceId = res?.workplaceId ?? res?.WorkplaceId;
 
           if (isValid) {
             this._token = token;
             this._workplaceId = workplaceId || '';
+            this.isDisabled.set(false);
             this.isLocked.set(false);
             this.isVerifying.set(false);
-            this.stopPairingFlow();
+            this.startHeartbeatPoll();
+          } else if (status === 2) {
+            // Revoked / Inactivo State: Keep token, show disabled screen!
+            this._token = token;
+            this.disabledDeviceName.set(res?.name || 'Este Kiosko');
+            this.isDisabled.set(true);
+            this.isLocked.set(true);
+            this.isVerifying.set(false);
+            this.startHeartbeatPoll();
           } else {
+            // Unlinked / Pending State
             this.clearDeviceStorage();
-            this.startPairingFlow();
+            this.showPairingScreen();
           }
           this._cdr.markForCheck();
         },
         error: () => {
           this.clearDeviceStorage();
-          this.startPairingFlow();
+          this.showPairingScreen();
           this._cdr.markForCheck();
         }
       });
     } else {
-      this.startPairingFlow();
+      this.showPairingScreen();
+    }
+  }
+
+  startHeartbeatPoll() {
+    this.stopHeartbeatPoll();
+    this.heartbeatSubscription = interval(4000).subscribe(() => {
+      const token = localStorage.getItem('kiosk_token');
+      if (token) {
+        this._kioskDevicesService.verifyToken(token).subscribe({
+          next: (res: any) => {
+            const isValid = res?.isValid ?? res?.IsValid;
+            const status = res?.status ?? res?.Status;
+            const workplaceId = res?.workplaceId ?? res?.WorkplaceId;
+
+            if (isValid) {
+              if (this.isLocked() || this.isDisabled()) {
+                this._token = token;
+                this._workplaceId = workplaceId || '';
+                this.isDisabled.set(false);
+                this.isLocked.set(false);
+                this._messageService.success('¡Dispositivo reactivado y listo para marcar!');
+                this._cdr.markForCheck();
+              }
+            } else if (status === 2) {
+              if (!this.isDisabled()) {
+                this.disabledDeviceName.set(res?.name || 'Este Kiosko');
+                this.isDisabled.set(true);
+                this.isLocked.set(true);
+                this._messageService.warning('El dispositivo ha sido inhabilitado por el Administrador.');
+                this._cdr.markForCheck();
+              }
+            } else {
+              this.stopHeartbeatPoll();
+              this.clearDeviceStorage();
+              this.showPairingScreen();
+              this._messageService.warning('El dispositivo ha sido desvinculado por el Administrador.');
+              this._cdr.markForCheck();
+            }
+          },
+          error: () => {
+            this.stopHeartbeatPoll();
+            this.clearDeviceStorage();
+            this.showPairingScreen();
+          }
+        });
+      }
+    });
+  }
+
+  stopHeartbeatPoll() {
+    if (this.heartbeatSubscription) {
+      this.heartbeatSubscription.unsubscribe();
+      this.heartbeatSubscription = undefined;
     }
   }
 
@@ -114,61 +187,140 @@ export class KioskPage implements OnInit, OnDestroy {
     this._workplaceId = '';
   }
 
-  startPairingFlow() {
+  showPairingScreen() {
+    this.stopHeartbeatPoll();
+    this.isDisabled.set(false);
     this.isLocked.set(true);
     this.isVerifying.set(false);
-    this.stopPairingFlow();
-
-    this._kioskDevicesService.generatePairingCode().subscribe({
-      next: (res) => {
-        this.pairingCode.set(res.code);
-        this._cdr.markForCheck();
-
-        this.pairingSubscription = interval(2000).subscribe(() => {
-          const currentCode = this.pairingCode();
-          if (!currentCode) return;
-
-          this._kioskDevicesService.checkPairingStatus(currentCode).subscribe({
-            next: (status: any) => {
-              const isApproved = status?.isApproved ?? status?.IsApproved;
-              const token = status?.token ?? status?.Token;
-              const workplaceId = status?.workplaceId ?? status?.WorkplaceId;
-
-              if (isApproved && token && workplaceId) {
-                localStorage.setItem('kiosk_token', token);
-                localStorage.setItem('kiosk_workplace_id', workplaceId);
-                this._messageService.success('¡Dispositivo vinculado con éxito!');
-                this.stopPairingFlow();
-                this.verifyDeviceStatus();
-              }
-            },
-            error: (err) => {
-              if (err.status === 404) {
-                this.stopPairingFlow();
-                this.startPairingFlow();
-              }
-            }
-          });
-        });
-      },
-      error: () => {
-        this._messageService.error('Error al generar código de vinculación.');
-      }
-    });
+    this.otpDigits.set(['', '', '', '', '', '']);
+    this._cdr.markForCheck();
   }
 
-  stopPairingFlow() {
-    if (this.pairingSubscription) {
-      this.pairingSubscription.unsubscribe();
-      this.pairingSubscription = undefined;
+  onOtpInput(index: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, '');
+    if (value.length > 1) {
+      value = value.slice(-1);
     }
+    const current = [...this.otpDigits()];
+    current[index] = value;
+    this.otpDigits.set(current);
+
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    }
+    this._cdr.markForCheck();
+  }
+
+  onOtpKeyDown(index: number, event: KeyboardEvent) {
+    if (event.key === 'Backspace') {
+      if (!this.otpDigits()[index] && index > 0) {
+        const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
+        if (prevInput) {
+          prevInput.focus();
+          prevInput.select();
+        }
+      }
+    } else if (event.key === 'Enter') {
+      this.submitPairingCode();
+    }
+  }
+
+  onOtpPaste(event: ClipboardEvent) {
+    event.preventDefault();
+    const pastedData = event.clipboardData?.getData('text')?.trim() || '';
+    if (pastedData) {
+      const digits = pastedData.replace(/\D/g, '').slice(0, 6).split('');
+      const newOtp = ['', '', '', '', '', ''];
+      digits.forEach((d, i) => {
+        if (i < 6) newOtp[i] = d;
+      });
+      this.otpDigits.set(newOtp);
+      const focusIndex = Math.min(digits.length, 5);
+      const targetInput = document.getElementById(`otp-input-${focusIndex}`) as HTMLInputElement;
+      if (targetInput) targetInput.focus();
+      this._cdr.markForCheck();
+    }
+  }
+
+  appendPairingDigit(digit: string) {
+    const current = [...this.otpDigits()];
+    const emptyIndex = current.findIndex(d => d === '');
+    if (emptyIndex !== -1) {
+      current[emptyIndex] = digit;
+      this.otpDigits.set(current);
+      if (emptyIndex < 5) {
+        const nextInput = document.getElementById(`otp-input-${emptyIndex + 1}`) as HTMLInputElement;
+        if (nextInput) nextInput.focus();
+      }
+      this._cdr.markForCheck();
+    }
+  }
+
+  deletePairingDigit() {
+    const current = [...this.otpDigits()];
+    let lastIndex = -1;
+    for (let i = 5; i >= 0; i--) {
+      if (current[i] !== '') {
+        lastIndex = i;
+        break;
+      }
+    }
+    if (lastIndex !== -1) {
+      current[lastIndex] = '';
+      this.otpDigits.set(current);
+      const targetInput = document.getElementById(`otp-input-${lastIndex}`) as HTMLInputElement;
+      if (targetInput) targetInput.focus();
+      this._cdr.markForCheck();
+    }
+  }
+
+  clearPairingDigit() {
+    this.otpDigits.set(['', '', '', '', '', '']);
+    const firstInput = document.getElementById('otp-input-0') as HTMLInputElement;
+    if (firstInput) firstInput.focus();
+    this._cdr.markForCheck();
+  }
+
+  submitPairingCode() {
+    const code = this.pairingInputCode.trim();
+    if (!code || code.length < 6) {
+      this._messageService.warning('Por favor ingrese el código de vinculación completo de 6 dígitos.');
+      return;
+    }
+
+    this.isSubmittingCode.set(true);
+    this._kioskDevicesService.claimPairingCode(code).subscribe({
+      next: (res) => {
+        this.isSubmittingCode.set(false);
+        localStorage.setItem('kiosk_token', res.token);
+        localStorage.setItem('kiosk_workplace_id', res.workplaceId);
+        this._token = res.token;
+        this._workplaceId = res.workplaceId;
+        this.isDisabled.set(false);
+        this.isLocked.set(false);
+        this.isVerifying.set(false);
+        this.clearPairingDigit();
+        this.startHeartbeatPoll();
+        this._messageService.success(`¡Dispositivo "${res.name}" vinculado con éxito!`);
+        this._cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isSubmittingCode.set(false);
+        this._messageService.error(parseApiErrorMessage(err));
+      }
+    });
   }
 
   ngOnDestroy() {
     if (this.timeSubscription) {
       this.timeSubscription.unsubscribe();
     }
-    this.stopPairingFlow();
+    this.stopHeartbeatPoll();
   }
 
   appendDigit(digit: string) {
@@ -206,7 +358,7 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   checkIn() {
-    if (this.isLocked()) return;
+    if (this.isLocked() || this.isDisabled()) return;
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
@@ -228,7 +380,6 @@ export class KioskPage implements OnInit, OnDestroy {
         setTimeout(() => {
           this.isLoading.set(false);
           if (err.status === 401) {
-            this.clearDeviceStorage();
             this.verifyDeviceStatus();
             this._messageService.error('Dispositivo no autorizado o revocado.');
           } else {
@@ -241,7 +392,7 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   startBreak() {
-    if (this.isLocked()) return;
+    if (this.isLocked() || this.isDisabled()) return;
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
@@ -263,7 +414,6 @@ export class KioskPage implements OnInit, OnDestroy {
         setTimeout(() => {
           this.isLoading.set(false);
           if (err.status === 401) {
-            this.clearDeviceStorage();
             this.verifyDeviceStatus();
             this._messageService.error('Dispositivo no autorizado o revocado.');
           } else {
@@ -276,7 +426,7 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   endBreak() {
-    if (this.isLocked()) return;
+    if (this.isLocked() || this.isDisabled()) return;
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
@@ -298,7 +448,6 @@ export class KioskPage implements OnInit, OnDestroy {
         setTimeout(() => {
           this.isLoading.set(false);
           if (err.status === 401) {
-            this.clearDeviceStorage();
             this.verifyDeviceStatus();
             this._messageService.error('Dispositivo no autorizado o revocado.');
           } else {
@@ -311,7 +460,7 @@ export class KioskPage implements OnInit, OnDestroy {
   }
 
   checkOut() {
-    if (this.isLocked()) return;
+    if (this.isLocked() || this.isDisabled()) return;
     if (!this.identifier.trim()) {
       this._messageService.warning('Ingresa tu DNI o Código');
       return;
@@ -333,7 +482,6 @@ export class KioskPage implements OnInit, OnDestroy {
         setTimeout(() => {
           this.isLoading.set(false);
           if (err.status === 401) {
-            this.clearDeviceStorage();
             this.verifyDeviceStatus();
             this._messageService.error('Dispositivo no autorizado o revocado.');
           } else {

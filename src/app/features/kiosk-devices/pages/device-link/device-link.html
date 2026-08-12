@@ -3,64 +3,56 @@
     <nz-breadcrumb-item>
       <a [routerLink]="['/kiosk-devices']">Dispositivos Kiosko</a>
     </nz-breadcrumb-item>
-    <nz-breadcrumb-item>Vincular Nuevo</nz-breadcrumb-item>
+    <nz-breadcrumb-item>Registrar Nuevo Kiosko</nz-breadcrumb-item>
   </nz-breadcrumb>
 
   <div class="flex gap-2">
     <button nz-button type="button" routerLink="/kiosk-devices">Cancelar</button>
-    <button nz-button nzType="primary" (click)="submitForm()" [nzLoading]="isSubmitting()">Vincular Dispositivo</button>
+    <button nz-button nzType="primary" (click)="submitForm()" [nzLoading]="isSubmitting()">
+      <nz-icon nzType="plus" /> Crear Kiosko
+    </button>
   </div>
 </div>
 
 <nz-divider class="my-4!" />
 
-<div class="max-w-3xl">
+<div class="max-w-2xl">
   <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Vincular Nuevo Dispositivo</h1>
-    <p class="text-gray-500">Autoriza a una PC o tablet remota para que los empleados puedan registrar su asistencia.</p>
-  </div>
-
-  <!-- Selection Method -->
-  <div class="mb-4">
-    <nz-radio-group [(ngModel)]="pairingMethod" nzButtonStyle="solid">
-      <label nz-radio-button nzValue="pin">🔢 Con Código PIN (Remoto / Trujillo)</label>
-      <label nz-radio-button nzValue="link">🔗 Generar Enlace Directo / Esta PC</label>
-    </nz-radio-group>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Registrar Nuevo Kiosko</h1>
+    <p class="text-gray-500">Registra una PC o tablet remota. Se generará un código de vinculación para ingresar en la pantalla del kiosko.</p>
   </div>
 
   <nz-card>
     <form nz-form [formGroup]="form" nzLayout="vertical">
       
-      <!-- PIN Code Field (If PIN mode) -->
-      @if (pairingMethod === 'pin') {
-        <div class="p-4 mb-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl">
-          <nz-form-item class="mb-0">
-            <nz-form-label nzRequired>Código PIN de la Pantalla Remota (6 dígitos)</nz-form-label>
-            <nz-form-control nzErrorTip="Ingrese el código de 6 dígitos que muestra la pantalla del Kiosko remota">
-              <input nz-input formControlName="pairingCode" placeholder="Ej: 784912 font-mono" class="text-lg tracking-widest font-bold uppercase max-w-xs" maxLength="6" />
-            </nz-form-control>
-          </nz-form-item>
-          <p class="text-xs text-blue-600 dark:text-blue-300 mt-2">
-            💡 En la pantalla remota (ej: Trujillo), abra <code>/kiosk</code> para ver el PIN de 6 dígitos generado en tiempo real.
-          </p>
-        </div>
-      }
-
       <nz-form-item>
-        <nz-form-label nzRequired>Nombre del Dispositivo</nz-form-label>
+        <nz-form-label nzRequired>Nombre del Dispositivo Kiosko</nz-form-label>
         <nz-form-control nzErrorTip="Por favor ingresa un nombre para identificar el dispositivo">
-          <input nz-input formControlName="name" placeholder="Ej: PC Recepción Trujillo / Tablet San Isidro" />
+          <input nz-input formControlName="name" placeholder="Ej: Tablet Recepción / PC Trujillo Entrance" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item class="mb-0">
         <nz-form-label nzRequired>Lugar de Marcación Asignado</nz-form-label>
-        <nz-form-control nzErrorTip="Por favor selecciona el lugar de marcación donde estará este dispositivo">
+        <nz-form-control nzErrorTip="Por favor selecciona el lugar de marcación donde estará ubicado este kiosko">
           <nz-select formControlName="workplaceId" nzPlaceHolder="Selecciona un lugar de marcación" [nzLoading]="isLoadingWorkplaces()">
             <nz-option *ngFor="let workplace of workplaces()" [nzValue]="workplace.id" [nzLabel]="workplace.name"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
     </form>
   </nz-card>
+
+  <div class="mt-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300 flex items-start gap-3">
+    <nz-icon nzType="info-circle" class="text-lg text-blue-500 mt-0.5" />
+    <div>
+      <p class="font-bold text-sm mb-1">¿Cómo funciona la vinculación?</p>
+      <p>Al guardar, el kiosko quedará registrado en estado <strong>Pendiente de Vinculación</strong>. En la lista de dispositivos podrás presionar <strong>"Ver / Generar Código"</strong> para obtener el PIN de 6 dígitos cuando estés listo para vincular la PC o tablet física.</p>
+    </div>
+  </div>
 </div>
+
+
+
+

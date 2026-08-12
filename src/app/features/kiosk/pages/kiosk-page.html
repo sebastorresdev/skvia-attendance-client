@@ -2,8 +2,8 @@
 
   <!-- Background Decorative Blurs -->
   <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[140px]"></div>
-    <div class="absolute bottom-10 right-10 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[120px]"></div>
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[140px]"></div>
+    <div class="absolute bottom-10 right-10 w-[400px] h-[400px] bg-indigo-600/15 rounded-full blur-[120px]"></div>
   </div>
 
   <!-- VERIFYING TOKEN LOADING SCREEN -->
@@ -11,49 +11,115 @@
     class="relative z-10 w-full max-w-md p-10 flex flex-col items-center text-center 
               bg-slate-900/90 backdrop-blur-2xl border border-slate-800 shadow-2xl rounded-3xl">
     <nz-spin nzSimple nzSize="large"></nz-spin>
-    <p class="text-slate-300 mt-5 font-semibold text-sm">Verificando autorización del dispositivo...</p>
+    <p style="color: #cbd5e1 !important;" class="mt-5 font-semibold text-sm">Verificando autorización del dispositivo...</p>
   </div>
 
-  <!-- UNLINKED PIN PAIRING SCREEN -->
-  <div *ngIf="!isVerifying() && isLocked()"
+  <!-- DISABLED / INACTIVO SCREEN (WHEN REVOKED BY ADMIN) -->
+  <div *ngIf="!isVerifying() && isDisabled()"
     class="relative z-10 w-full max-w-lg p-8 sm:p-10 flex flex-col items-center text-center 
-              bg-slate-900/95 backdrop-blur-2xl border border-blue-500/30 shadow-[0_20px_60px_rgba(0,0,0,0.6)] rounded-[2.5rem]">
+              bg-slate-900/95 backdrop-blur-2xl border-2 border-rose-500/40 shadow-[0_25px_70px_rgba(225,29,72,0.25)] rounded-[2.5rem]">
 
-    <div class="w-20 h-20 mb-5 bg-blue-500/20 rounded-3xl flex items-center justify-center border border-blue-400/40 shadow-inner">
-      <nz-icon nzType="desktop" class="text-4xl text-blue-400" />
+    <div class="w-20 h-20 mb-4 bg-rose-500/20 rounded-3xl flex items-center justify-center border border-rose-400/40 shadow-inner">
+      <nz-icon nzType="stop" class="text-4xl text-rose-400" />
     </div>
 
-    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-2">Dispositivo No Vinculado</h2>
-    <p class="text-slate-300 text-sm mb-6 max-w-sm leading-relaxed">
-      Ingresa al sistema web desde el Administrador y autoriza este kiosko usando el siguiente código:
+    <h2 style="color: #ffffff !important;" class="text-2xl sm:text-3xl font-extrabold mb-2 tracking-tight drop-shadow-md">
+      Dispositivo Inhabilitado
+    </h2>
+
+    <div class="inline-block px-3.5 py-1.5 bg-rose-950/80 border border-rose-500/50 rounded-full text-rose-300 text-xs font-bold mb-4">
+      🚫 {{ disabledDeviceName() }}
+    </div>
+
+    <p style="color: #cbd5e1 !important;" class="text-sm mb-6 max-w-md leading-relaxed font-medium">
+      Este dispositivo ha sido <strong>inhabilitado temporalmente</strong> por el Administrador. No se pueden registrar asistencias en este momento.
     </p>
 
-    <!-- PIN Display -->
-    <div class="w-full bg-slate-950/80 border border-blue-500/50 rounded-2xl p-6 mb-6 backdrop-blur-md shadow-inner flex flex-col items-center">
-      <span class="text-xs text-blue-400 uppercase tracking-widest font-bold mb-2">Código PIN de Vinculación</span>
-      <div class="text-5xl sm:text-6xl font-mono font-extrabold text-blue-400 tracking-[0.2em] drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]">
-        {{ pairingCode() || '------' }}
+    <div class="w-full p-4 bg-slate-950/80 rounded-2xl border border-slate-800 text-xs text-slate-300 flex items-center justify-center gap-2">
+      <nz-icon nzType="sync" [nzSpin]="true" class="text-amber-400 text-base" />
+      <span>Esperando que el Administrador reactive este equipo...</span>
+    </div>
+  </div>
+
+  <!-- UNLINKED PAIRING CODE INPUT SCREEN -->
+  <div *ngIf="!isVerifying() && isLocked() && !isDisabled()"
+    class="relative z-10 w-full max-w-lg p-8 sm:p-10 flex flex-col items-center text-center 
+              bg-slate-900/95 backdrop-blur-2xl border-2 border-blue-500/40 shadow-[0_25px_70px_rgba(0,0,0,0.8)] rounded-[2.5rem]">
+
+    <div class="w-20 h-20 mb-4 bg-blue-500/20 rounded-3xl flex items-center justify-center border border-blue-400/40 shadow-inner">
+      <nz-icon nzType="key" class="text-4xl text-blue-400" />
+    </div>
+
+    <h2 style="color: #ffffff !important;" class="text-2xl sm:text-3xl font-extrabold mb-2 tracking-tight drop-shadow-md">
+      Vincular Dispositivo Kiosko
+    </h2>
+    <p style="color: #94a3b8 !important;" class="text-sm mb-6 max-w-sm leading-relaxed font-medium">
+      Ingresa el <strong style="color: #60a5fa !important;">código de vinculación de 6 dígitos</strong> generado desde el panel del Administrador:
+    </p>
+
+    <!-- 6-Box OTP Input Component (PrimeNG Style) -->
+    <div class="w-full mb-6">
+      <div class="flex justify-center items-center gap-2 sm:gap-3" (paste)="onOtpPaste($event)">
+        @for (digit of otpDigits(); track i; let i = $index) {
+          <input [id]="'otp-input-' + i"
+            type="text"
+            inputmode="numeric"
+            maxLength="1"
+            [value]="digit"
+            (input)="onOtpInput(i, $event)"
+            (keydown)="onOtpKeyDown(i, $event)"
+            style="color: #60a5fa !important;"
+            class="w-11 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-mono font-extrabold bg-slate-950 border-2 border-slate-700 rounded-2xl shadow-inner transition-all duration-200 focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/40 active:scale-95"
+            [class.border-blue-500]="digit !== ''"
+            [class.bg-blue-950/40]="digit !== ''"
+            [class.shadow-[0_0_20px_rgba(59,130,246,0.5)]]="digit !== ''"
+            autocomplete="off" />
+        }
       </div>
     </div>
 
-    <div class="flex items-center gap-3 text-xs text-slate-300 mb-6 bg-slate-800/60 px-5 py-2.5 rounded-full border border-slate-700">
-      <nz-spin nzSimple nzSize="small"></nz-spin>
-      <span>Esperando que el administrador apruebe la vinculación...</span>
+    <!-- Touch Keypad for Pairing Code -->
+    <div class="w-full grid grid-cols-3 gap-2 mb-6">
+      @for (num of ['1','2','3','4','5','6','7','8','9']; track num) {
+        <button type="button" (click)="appendPairingDigit(num)"
+          style="color: #ffffff !important;"
+          class="h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 font-black text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
+          {{ num }}
+        </button>
+      }
+      <button type="button" (click)="clearPairingDigit()"
+        style="color: #cbd5e1 !important;"
+        class="h-12 rounded-xl bg-slate-800/80 hover:bg-slate-800 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center">
+        BORRAR
+      </button>
+      <button type="button" (click)="appendPairingDigit('0')"
+        style="color: #ffffff !important;"
+        class="h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 font-black text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
+        0
+      </button>
+      <button type="button" (click)="deletePairingDigit()"
+        class="h-12 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 font-bold text-lg border border-rose-800/50 transition-all flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+          <line x1="18" y1="9" x2="12" y2="15"/>
+          <line x1="12" y1="9" x2="18" y2="15"/>
+        </svg>
+      </button>
     </div>
 
-    <div class="w-full flex gap-3">
-      <button nz-button nzType="default" (click)="startPairingFlow()" class="flex-1 h-12 rounded-xl font-semibold border-slate-700 text-slate-200 hover:text-white bg-slate-800/80">
-        <nz-icon nzType="reload" /> Nuevo Código
-      </button>
-      <button nz-button nzType="primary" (click)="goToAdminLink()" class="flex-1 h-12 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 border-none shadow-lg shadow-blue-900/40">
-        <nz-icon nzType="setting" /> Vincular desde Admin
+    <!-- Submit Action Button -->
+    <div class="w-full">
+      <button nz-button nzType="primary" nzSize="large" (click)="submitPairingCode()" [nzLoading]="isSubmittingCode()"
+        class="w-full h-14 rounded-2xl font-extrabold text-lg bg-blue-600 hover:bg-blue-500 border-none shadow-lg shadow-blue-900/50 flex items-center justify-center gap-2">
+        <nz-icon nzType="check-circle" class="text-xl" /> Vincular Kiosko
       </button>
     </div>
   </div>
 
+
   <!-- ACTIVE KIOSK DISPLAY SCREEN (HIGH CONTRAST) -->
-  <div *ngIf="!isVerifying() && !isLocked()" class="relative z-10 w-full max-w-xl p-8 sm:p-10 flex flex-col items-center text-center 
-              bg-slate-900/95 backdrop-blur-2xl border border-slate-800 shadow-[0_25px_70px_rgba(0,0,0,0.7)] rounded-[2.5rem]">
+  <div *ngIf="!isVerifying() && !isLocked() && !isDisabled()" class="relative z-10 w-full max-w-xl p-8 sm:p-10 flex flex-col items-center text-center 
+              bg-slate-900/95 backdrop-blur-2xl border-2 border-slate-800 shadow-[0_25px_70px_rgba(0,0,0,0.8)] rounded-[2.5rem]">
 
     <!-- Logo / Brand Header -->
     <div class="mb-6 flex flex-col items-center">
@@ -65,18 +131,18 @@
           <path d="M2 12l10 5 10-5" />
         </svg>
       </div>
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
+      <h1 style="color: #ffffff !important;" class="text-3xl sm:text-4xl font-extrabold tracking-tight drop-shadow-md">
         Skvia Attendance
       </h1>
-      <p class="text-blue-400 font-bold tracking-widest text-xs mt-1 uppercase">Portal de Marcaciones</p>
+      <p style="color: #60a5fa !important;" class="font-bold tracking-widest text-xs mt-1 uppercase">Portal de Marcaciones</p>
     </div>
 
     <!-- Live Clock Display -->
-    <div class="mb-8 w-full flex flex-col items-center p-5 bg-slate-950/80 rounded-3xl border border-slate-800 shadow-inner">
-      <div class="text-5xl sm:text-6xl font-mono font-extrabold text-white tracking-widest drop-shadow-lg mb-1">
+    <div class="mb-8 w-full flex flex-col items-center p-5 bg-slate-950/90 rounded-3xl border border-slate-800 shadow-inner">
+      <div style="color: #ffffff !important;" class="text-5xl sm:text-6xl font-mono font-extrabold tracking-widest drop-shadow-lg mb-1">
         {{ currentTime | date:'HH:mm:ss' }}
       </div>
-      <div class="text-xs sm:text-sm text-slate-300 font-bold uppercase tracking-[0.2em]">
+      <div style="color: #cbd5e1 !important;" class="text-xs sm:text-sm font-bold uppercase tracking-[0.2em]">
         {{ currentTime | date:'EEEE, dd MMMM yyyy' }}
       </div>
     </div>
@@ -85,7 +151,8 @@
     <div class="w-full mb-5">
       <nz-input-group nzSize="large" [nzPrefix]="prefixUser" class="rounded-2xl overflow-hidden bg-slate-950 border border-slate-700 shadow-inner">
         <input type="text" nz-input placeholder="Ingresa tu DNI o Código" [(ngModel)]="identifier"
-          class="text-center text-xl sm:text-2xl tracking-widest font-extrabold text-white placeholder-slate-500 bg-transparent! border-none! py-3! focus:ring-0!"
+          style="color: #ffffff !important;"
+          class="text-center text-xl sm:text-2xl tracking-widest font-extrabold placeholder-slate-500 bg-transparent! border-none! py-3! focus:ring-0!"
           (keyup.enter)="checkIn()" autocomplete="off" />
       </nz-input-group>
       <ng-template #prefixUser>
@@ -97,21 +164,28 @@
     <div class="w-full grid grid-cols-3 gap-2.5 mb-6">
       @for (num of ['1','2','3','4','5','6','7','8','9']; track num) {
       <button type="button" (click)="appendDigit(num)"
-        class="h-13 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-extrabold text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
+        style="color: #ffffff !important;"
+        class="h-13 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 font-extrabold text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
         {{ num }}
       </button>
       }
       <button type="button" (click)="clearDigit()"
-        class="h-13 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center">
+        style="color: #cbd5e1 !important;"
+        class="h-13 rounded-xl bg-slate-800/80 hover:bg-slate-800 font-bold text-xs border border-slate-700 transition-all flex items-center justify-center">
         BORRAR
       </button>
       <button type="button" (click)="appendDigit('0')"
-        class="h-13 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-extrabold text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
+        style="color: #ffffff !important;"
+        class="h-13 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 font-extrabold text-2xl border border-slate-700 transition-all flex items-center justify-center shadow-md">
         0
       </button>
       <button type="button" (click)="deleteDigit()"
         class="h-13 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 font-bold text-xl border border-rose-800/50 transition-all flex items-center justify-center">
-        <nz-icon nzType="backspace" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+          <line x1="18" y1="9" x2="12" y2="15"/>
+          <line x1="12" y1="9" x2="18" y2="15"/>
+        </svg>
       </button>
     </div>
 
@@ -135,7 +209,7 @@
       <button nz-button nzSize="large"
         class="h-14 text-base rounded-2xl font-extrabold bg-indigo-600 hover:bg-indigo-500 text-white border-none shadow-lg shadow-indigo-950/50 transition-transform active:scale-95 flex items-center justify-center gap-2"
         [nzLoading]="isLoading()" (click)="endBreak()">
-        <nz-icon nzType="rest" class="text-xl" /> FIN REFRIGERIO
+        <nz-icon nzType="check" class="text-xl" /> FIN REFRIGERIO
       </button>
 
       <!-- 4. SALIDA -->
@@ -148,9 +222,12 @@
 
   </div>
 
-  <!-- Footer Help -->
-  <div class="mt-6 text-slate-400 text-xs font-medium tracking-wide flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-800 bg-slate-900/60">
-    <nz-icon nzType="info-circle" class="text-blue-400" />
-    <span>Si tienes problemas con tu código o marcación, contacta a Recursos Humanos.</span>
+  <!-- Global Footer Note -->
+  <div class="relative z-10 mt-8 text-center text-xs text-slate-400 font-medium">
+    <span class="inline-flex items-center gap-1.5 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800">
+      <nz-icon nzType="info-circle" class="text-blue-400" />
+      <span>Si tienes problemas con tu código o marcación, contacta a Recursos Humanos.</span>
+    </span>
   </div>
+
 </div>

@@ -2,16 +2,14 @@
   <div class="flex justify-between items-center mb-6">
     <div>
       <h2 class="text-xl font-semibold dark:text-white">Dispositivos Kiosko</h2>
-      <p class="text-gray-500">Administra los dispositivos autorizados para realizar marcaciones.</p>
+      <p class="text-gray-500">Administra los dispositivos autorizados para realizar marcaciones en las sedes.</p>
     </div>
     <div class="flex gap-2">
-      <a nz-button nzType="default" href="/kiosk" target="_blank">
-        <nz-icon nzType="desktop"></nz-icon>
-        Abrir Marcador
-      </a>
+      <button nz-button nzType="default" (click)="copyKioskUrl()">
+        <nz-icon nzType="copy" /> Copiar Enlace del Kiosko
+      </button>
       <a nz-button nzType="primary" routerLink="/kiosk-devices/link">
-        <nz-icon nzType="plus"></nz-icon>
-        Vincular Dispositivo
+        <nz-icon nzType="plus" /> Crear Kiosko
       </a>
     </div>
   </div>
@@ -22,35 +20,70 @@
         <tr>
           <th>Nombre del Dispositivo</th>
           <th>Lugar de Marcación</th>
-          <th>Fecha de Vinculación</th>
           <th>Estado</th>
-          <th>Acciones</th>
+          <th>Fecha Registro / Vinculación</th>
+          <th class="text-center">Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let data of basicTable.data">
-          <td class="font-medium">{{ data.name }}</td>
+          <td class="font-medium text-slate-800 dark:text-slate-100">{{ data.name }}</td>
           <td>
             <nz-tag [nzColor]="'blue'">{{ data.workplaceName }}</nz-tag>
           </td>
-          <td>{{ data.createdAt | date:'short' }}</td>
           <td>
-            <nz-tag [nzColor]="data.isActive ? 'success' : 'error'">
-              {{ data.isActive ? 'Activo' : 'Revocado' }}
-            </nz-tag>
+            <ng-container [ngSwitch]="data.status">
+              <nz-tag *ngSwitchCase="0" [nzColor]="'orange'" class="font-semibold">🟡 Pendiente</nz-tag>
+              <nz-tag *ngSwitchCase="1" [nzColor]="'success'" class="font-semibold">🟢 Vinculado</nz-tag>
+              <nz-tag *ngSwitchCase="2" [nzColor]="'error'" class="font-semibold">🔴 Inactivo</nz-tag>
+              <nz-tag *ngSwitchDefault [nzColor]="data.isActive ? 'success' : 'error'">
+                {{ data.isActive ? 'Activo' : 'Inactivo' }}
+              </nz-tag>
+            </ng-container>
+          </td>
+          <td class="text-xs text-slate-500">
+            <div>Creado: {{ data.createdAt | date:'short' }}</div>
+            <div *ngIf="data.linkedAt" class="text-emerald-600 font-medium">Vinculado: {{ data.linkedAt | date:'short' }}</div>
           </td>
           <td>
-            <div class="flex gap-2">
-              <button nz-button nzType="text" nzDanger *ngIf="data.isActive" nz-popconfirm
-                nzPopconfirmTitle="¿Estás seguro de revocar este dispositivo? Ya no podrá registrar asistencias."
-                (nzOnConfirm)="revokeDevice(data.id)">
-                <nz-icon nzType="stop" /> Revocar
+            <div class="flex items-center justify-center gap-2">
+              <!-- Pending (Status 0): Ver / Generar Código -->
+              <button *ngIf="data.status === 0" 
+                nz-button nzType="default" nzShape="circle"
+                nz-tooltip nzTooltipTitle="Ver / Generar Código de Vinculación"
+                (click)="generateCode(data)" [nzLoading]="generatingCodeId() === data.id">
+                <nz-icon nzType="key" class="text-blue-600 dark:text-blue-400" />
               </button>
 
-              <button nz-button nzType="text" nzDanger *ngIf="!data.isActive" nz-popconfirm
-                nzPopconfirmTitle="¿Estás seguro de eliminar este dispositivo de forma permanente?"
-                (nzOnConfirm)="deleteDevice(data.id)">
-                <nz-icon nzType="delete" /> Eliminar
+              <!-- Linked (Status 1) or Inactivo (Status 2): Desvincular -->
+              <button *ngIf="data.status === 1 || data.status === 2" 
+                nz-button nzType="default" nzShape="circle"
+                nz-tooltip nzTooltipTitle="Desvincular Kiosko (Volver a Pendiente)"
+                (click)="confirmUnlink(data)">
+                <nz-icon nzType="disconnect" class="text-amber-600 dark:text-amber-400" />
+              </button>
+
+              <!-- Linked (Status 1): Inhabilitar / Suspender -->
+              <button *ngIf="data.status === 1" 
+                nz-button nzType="text" nzDanger nzShape="circle"
+                nz-tooltip nzTooltipTitle="Inhabilitar Kiosko"
+                (click)="confirmRevoke(data)">
+                <nz-icon nzType="stop" />
+              </button>
+
+              <!-- Inactivo (Status 2): Habilitar / Reactivar -->
+              <button *ngIf="data.status === 2" 
+                nz-button nzType="default" nzShape="circle"
+                nz-tooltip nzTooltipTitle="Habilitar / Reactivar Kiosko"
+                (click)="confirmReactivate(data)">
+                <nz-icon nzType="check-circle" class="text-emerald-600 dark:text-emerald-400" />
+              </button>
+
+              <!-- All states: Eliminar -->
+              <button nz-button nzType="text" nzDanger nzShape="circle"
+                nz-tooltip nzTooltipTitle="Eliminar Kiosko"
+                (click)="confirmDelete(data)">
+                <nz-icon nzType="delete" />
               </button>
             </div>
           </td>
@@ -59,3 +92,52 @@
     </nz-table>
   </nz-card>
 </div>
+
+<!-- PAIRING CODE & URL MODAL -->
+<nz-modal
+  [nzVisible]="isModalVisible()"
+  [nzTitle]="'🔑 Código de Vinculación (' + activeDeviceName() + ')'"
+  [nzFooter]="modalFooter"
+  (nzOnCancel)="closeModal()"
+  [nzMaskClosable]="true">
+  <ng-container *nzModalContent>
+    <div class="py-2">
+      <p class="text-gray-600 dark:text-gray-300 text-xs font-medium mb-1">
+        Enlace del Marcador (para enviar a la PC remota):
+      </p>
+      <div class="flex items-center gap-2 mb-5 p-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700">
+        <a [href]="kioskUrl()" target="_blank" class="text-blue-600 dark:text-blue-400 font-bold underline text-xs truncate flex-1 hover:text-blue-500">
+          {{ kioskUrl() }}
+        </a>
+        <button type="button" nz-button nzType="primary" nzSize="small" (click)="copyUrl(kioskUrl())" class="rounded-lg font-bold text-xs">
+          <nz-icon nzType="copy" /> Copiar Enlace
+        </button>
+      </div>
+
+      <p class="text-gray-600 dark:text-gray-300 text-xs font-medium mb-1">
+        Código de Vinculación para "<strong>{{ activeDeviceName() }}</strong>":
+      </p>
+      <div class="bg-slate-950 text-blue-400 font-mono font-extrabold text-5xl tracking-[0.25em] py-5 px-4 rounded-2xl border border-blue-500/40 shadow-inner mb-4 text-center drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+        {{ activePairingCode() }}
+      </div>
+
+      <div class="flex justify-between items-center pt-1">
+        <div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-bold">
+          <nz-icon nzType="clock-circle" />
+          <span>⏱️ Válido por: <strong>{{ remainingTimeText() }}</strong></span>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" nz-button nzType="default" (click)="forceRegenerateCode()" [nzLoading]="isRegenerating()" class="rounded-lg font-semibold text-xs">
+            <nz-icon nzType="sync" /> Nuevo Código
+          </button>
+          <button type="button" nz-button nzType="primary" (click)="copyCode(activePairingCode())" class="rounded-lg font-bold text-xs">
+            <nz-icon nzType="copy" /> Copiar Código
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template #modalFooter>
+    <button nz-button nzType="primary" (click)="closeModal()">Entendido</button>
+  </ng-template>
+</nz-modal>
