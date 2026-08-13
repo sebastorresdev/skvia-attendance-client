@@ -1,0 +1,61 @@
+<div class="p-2">
+  <nz-alert
+    nzType="info"
+    nzShowIcon
+    [nzMessage]="'Asignación Masiva de Horario Base'"
+    [nzDescription]="'Se asignará la plantilla de horario seleccionada a ' + data.employeeIds.length + ' empleado(s).'"
+    class="mb-4"
+  ></nz-alert>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        Plantilla / Turno Base <span class="text-red-500">*</span>
+      </label>
+      <nz-select
+        formControlName="scheduleTemplateId"
+        nzPlaceHolder="Seleccionar plantilla de horario..."
+        class="w-full"
+        nzShowSearch
+      >
+        @for (s of schedules(); track s.id) {
+          <nz-option [nzValue]="s.id" [nzLabel]="s.code + ' - ' + s.description + ' (' + s.defaultStartTime + ' a ' + s.defaultEndTime + ')'"></nz-option>
+        }
+      </nz-select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Fecha Inicio de Vigencia <span class="text-red-500">*</span>
+        </label>
+        <nz-date-picker formControlName="effectiveFrom" class="w-full" nzFormat="dd/MM/yyyy"></nz-date-picker>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Fecha Fin de Vigencia
+        </label>
+        <nz-date-picker
+          formControlName="effectiveTo"
+          class="w-full"
+          nzFormat="dd/MM/yyyy"
+          [nzDisabled]="isIndefinite()"
+        ></nz-date-picker>
+      </div>
+    </div>
+
+    <div class="pt-1">
+      <label nz-checkbox formControlName="isIndefinite" class="text-sm font-medium text-slate-700 dark:text-slate-300">
+        Vigencia Indefinida (Sin fecha final de vencimiento)
+      </label>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+      <button type="button" nz-button (click)="cancel()">Cancelar</button>
+      <button type="submit" nz-button nzType="primary" [nzLoading]="isSubmitting()">
+        Asignar Horario Base
+      </button>
+    </div>
+  </form>
+</div>

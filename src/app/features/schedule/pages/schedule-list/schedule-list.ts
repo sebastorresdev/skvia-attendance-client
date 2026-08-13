@@ -11,10 +11,14 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzTabsModule, NzTabsComponent, NzTabComponent } from 'ng-zorro-antd/tabs';
+
 import { ScheduleResponse } from '../../models/schedule';
 import { ScheduleService } from '../../services/schedule.service';
 import { ScheduleFormModal } from '../../components/schedule-form-modal/schedule-form-modal';
 import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
+import { ScheduleBulkAssign } from '../schedule-bulk-assign/schedule-bulk-assign';
+import { ScheduleRotativePlanner } from '../schedule-rotative-planner/schedule-rotative-planner';
 
 @Component({
   selector: 'app-schedule-list',
@@ -30,7 +34,12 @@ import { parseApiErrorMessage } from '../../../../shared/utils/api-error.util';
     NzModalModule,
     NzInputModule,
     NzSpaceModule,
-    NzTagModule
+    NzTagModule,
+    NzTabsModule,
+    NzTabsComponent,
+    NzTabComponent,
+    ScheduleBulkAssign,
+    ScheduleRotativePlanner
   ],
   templateUrl: './schedule-list.html',
 })
@@ -39,6 +48,7 @@ export class ScheduleList implements OnInit {
   private _messageService = inject(NzMessageService);
   private _modalService = inject(NzModalService);
 
+  activeTab = signal(0);
   allSchedules = signal<ScheduleResponse[]>([]);
   search = signal('');
 
@@ -126,7 +136,6 @@ export class ScheduleList implements OnInit {
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
-        // Since we don't have a bulk delete, we'll map multiple delete calls.
         const ids = Array.from(this.setOfCheckedId);
         let deleted = 0;
         ids.forEach(id => {
@@ -183,7 +192,6 @@ export class ScheduleList implements OnInit {
     let end = parse(schedule.defaultEndTime);
     let start = parse(schedule.defaultStartTime);
     
-    // Si cruza la medianoche (ej: 22:00 a 06:00)
     if (end < start) end += 24;
     
     let total = end - start;

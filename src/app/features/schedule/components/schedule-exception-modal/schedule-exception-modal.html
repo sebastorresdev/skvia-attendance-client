@@ -1,0 +1,95 @@
+<div class="p-2">
+  <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700 mb-4">
+    <div>
+      <div class="text-xs text-slate-500 font-medium">EMPLEADO & FECHA</div>
+      <div class="text-base font-semibold text-slate-800 dark:text-slate-100">
+        {{ data.employeeName || 'Empleado' }} - {{ data.day.date }}
+      </div>
+    </div>
+    @if (data.day.isException) {
+      <nz-tag nzColor="purple">Excepción Activa</nz-tag>
+    } @else {
+      <nz-tag nzColor="blue">Horario Base</nz-tag>
+    }
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        Tipo de Día / Condición
+      </label>
+      <nz-select formControlName="dayType" class="w-full">
+        <nz-option [nzValue]="ScheduleDayType.WorkDay" nzLabel="Día Laborable (Turno Regular/Ajustado)"></nz-option>
+        <nz-option [nzValue]="ScheduleDayType.DayOff" nzLabel="Descanso / Día Libre"></nz-option>
+        <nz-option [nzValue]="ScheduleDayType.Vacation" nzLabel="Vacaciones"></nz-option>
+        <nz-option [nzValue]="ScheduleDayType.MedicalLeave" nzLabel="Licencia Médica / Permiso Salud"></nz-option>
+        <nz-option [nzValue]="ScheduleDayType.MakeUpDay" nzLabel="Día de Recuperación / Compensatorio"></nz-option>
+      </nz-select>
+    </div>
+
+    @if (form.get('dayType')?.value === ScheduleDayType.WorkDay || form.get('dayType')?.value === ScheduleDayType.MakeUpDay) {
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Asignar Turno Predefinido (Opcional)
+        </label>
+        <nz-select
+          formControlName="customScheduleId"
+          nzPlaceHolder="Seleccionar turno predefinido..."
+          class="w-full"
+          nzAllowClear
+          (ngModelChange)="onScheduleSelect($event)"
+        >
+          @for (s of schedules(); track s.id) {
+            <nz-option [nzValue]="s.id" [nzLabel]="s.code + ' - ' + s.description + ' (' + s.defaultStartTime + ' a ' + s.defaultEndTime + ')'"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora Entrada</label>
+          <nz-time-picker formControlName="startTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora Salida</label>
+          <nz-time-picker formControlName="endTime" nzFormat="HH:mm" class="w-full"></nz-time-picker>
+        </div>
+      </div>
+    }
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        Motivo / Observación de la Excepción
+      </label>
+      <textarea
+        nz-input
+        formControlName="reason"
+        placeholder="Ej: Cambio de turno acordado, Permiso de cita médica, etc."
+        [nzAutosize]="{ minRows: 2, maxRows: 4 }"
+      ></textarea>
+    </div>
+
+    <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div>
+        @if (data.day.isException) {
+          <button
+            type="button"
+            nz-button
+            nzDanger
+            [nzLoading]="isDeleting()"
+            (click)="deleteException()"
+          >
+            Eliminar Excepción
+          </button>
+        }
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" nz-button (click)="cancel()">Cancelar</button>
+        <button type="submit" nz-button nzType="primary" [nzLoading]="isSubmitting()">
+          Guardar Excepción
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

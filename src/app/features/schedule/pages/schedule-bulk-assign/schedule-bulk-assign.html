@@ -1,0 +1,114 @@
+<div class="space-y-4">
+  <!-- Filters and Header -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Asignación Masiva de Horario Base</h2>
+        <p class="text-xs text-slate-500">Selecciona empleados y asigna su plantilla de turno por defecto con rango de fecha.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          nz-button
+          nzType="primary"
+          [disabled]="setOfCheckedId.size === 0"
+          (click)="openAssignModal()"
+          class="flex items-center gap-2 font-medium"
+        >
+          <i nz-icon nzType="calendar" nzTheme="outline"></i>
+          Asignar Horario Base ({{ setOfCheckedId.size }})
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+      <nz-input-group [nzPrefix]="prefixIconSearch">
+        <input
+          type="text"
+          nz-input
+          placeholder="Buscar por código, DNI o nombre..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); refreshCheckedStatus()"
+        />
+      </nz-input-group>
+      <ng-template #prefixIconSearch><i nz-icon nzType="search"></i></ng-template>
+
+      <nz-select
+        [ngModel]="selectedBranchId()"
+        (ngModelChange)="selectedBranchId.set($event); refreshCheckedStatus()"
+        nzPlaceHolder="Todas las sucursales"
+        nzAllowClear
+        class="w-full"
+      >
+        @for (b of branches(); track b.id) {
+          <nz-option [nzValue]="b.id" [nzLabel]="b.name"></nz-option>
+        }
+      </nz-select>
+
+      <nz-select
+        [ngModel]="selectedDepartmentId()"
+        (ngModelChange)="selectedDepartmentId.set($event); refreshCheckedStatus()"
+        nzPlaceHolder="Todos los departamentos"
+        nzAllowClear
+        class="w-full"
+      >
+        @for (d of departments(); track d.id) {
+          <nz-option [nzValue]="d.id" [nzLabel]="d.name"></nz-option>
+        }
+      </nz-select>
+    </div>
+  </div>
+
+  <!-- Employee Table -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <nz-table
+      #employeeTable
+      [nzData]="filteredEmployees()"
+      [nzLoading]="isLoading()"
+      nzSize="middle"
+      [nzPageSize]="10"
+    >
+      <thead>
+        <tr>
+          <th
+            [nzChecked]="checked"
+            [nzIndeterminate]="indeterminate"
+            (nzCheckedChange)="onAllChecked($event)"
+            nzWidth="50px"
+          ></th>
+          <th>Empleado</th>
+          <th>Código</th>
+          <th>DNI / Doc</th>
+          <th>Departamento</th>
+          <th>Cargo</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of employeeTable.data; track item.id) {
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td
+              [nzChecked]="setOfCheckedId.has(item.id)"
+              (nzCheckedChange)="onItemChecked(item.id, $event)"
+            ></td>
+            <td class="font-semibold text-slate-800 dark:text-slate-200">
+              {{ item.firstName }} {{ item.lastName }}
+            </td>
+            <td>
+              <span class="font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
+                {{ item.code }}
+              </span>
+            </td>
+            <td>{{ item.documentNumber || '-' }}</td>
+            <td>{{ item.position || '-' }}</td>
+            <td>
+              <nz-tag [nzColor]="item.status === EmployeeStatus.Active ? 'green' : 'red'">
+                {{ item.status === EmployeeStatus.Active ? 'Activo' : 'Inactivo' }}
+              </nz-tag>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>
